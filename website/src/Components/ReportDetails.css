@@ -1,0 +1,65 @@
+.report-details-page {
+  height: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: url("C:/Users/Lenovo/OneDrive/Attachments/Desktop/SafeStreet/website/src/images/reportbackground.jpeg") no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center container horizontally */
+  justify-content: flex-start;
+}
+
+.report-details-container {
+  width: 60%;
+  max-width: 900px;
+  margin: 40px 0; /* Vertical margin only, no left */
+  padding: 25px;
+  background: rgba(245, 222, 179, 0.6); /* White chocolate cream color */
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  font-family: "Poppins", sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;  /* Center content inside container */
+  text-align: center;
+}
+
+/* Images in a consistent card format */
+.report-image {
+  width: 300px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 4px solid #ddd;
+  transition: transform 0.3s ease-in-out;
+  background: #f2f2f2;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+/* Error & Loading messages */
+.error-text, .loading-text {
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: red;
+  padding: 15px;
+  border-radius: 8px;
+  background: #ffebee;
+  border: 2px solid red;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .report-details-container {
+    width: 90%;
+    padding: 20px;
+  }
+
+  .report-image {
+    width: 100%;
+    height: auto;
+  }
+}

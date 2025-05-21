@@ -1,0 +1,126 @@
+/* Apply styles only inside register-container */
+.register-container {
+  background: url("../images/loginbackground.png") no-repeat center center fixed;
+  background-size: cover;
+  height: 100vh;
+  display: flex;
+  justify-content: center; /* Center like login */
+  align-items: flex-start; /* Align top */
+  padding-top: 10vh; /* Same padding as login */
+  overflow: hidden; /* Prevent scrolling */
+}
+
+.register-container #registerPage {
+  background: none; /* Transparent like login */
+  box-shadow: none;
+  border-radius: 0;
+  padding: 20px;
+  width: 350px;
+  text-align: center;
+}
+
+.register-container h1 {
+  color: white;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.register-container .input-box {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.register-container .input-box label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: white;
+}
+
+.register-container .input-box input {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: rgb(255, 252, 252);
+  border: 1px solid white;
+  border-radius: 5px;
+  outline: none;
+}
+
+.register-container .input-box input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.register-container .password-container {
+  position: relative;
+}
+
+.register-container .password-container .eye {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: white;
+}
+
+.register-container .button {
+  width: 100%;
+  padding: 12px;
+  background: #25bf53;
+  border: none;
+  color: white;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out;
+}
+
+.register-container .button:hover {
+  background: #00c2fe;
+}
+
+.register-container .register {
+  text-align: center;
+  margin-top: 15px;
+  color: white;
+}
+
+.register-container .register button {
+  background: none;
+  border: none;
+  color: #4facfe;
+  cursor: pointer;
+}
+
+.register-container .register button:hover {
+  text-decoration: underline;
+}
+
+/* Loading overlay (if needed like in login) */
+.register-container .loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.register-container .spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-top: 5px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

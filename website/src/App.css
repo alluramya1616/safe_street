@@ -1,0 +1,145 @@
+/* .App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} */
+/* Set the entire background to white */
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-image: url("C:\Users\Lenovo\OneDrive\Attachments\Desktop\SafeStreet\website\src\images\loginbackground.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  font-family: Arial, sans-serif;
+}
+
+/* Main container */
+.background {
+  display: flex;
+  justify-content: flex-end; /* Aligns the login form to the right */
+  align-items: center;
+  height: 100vh;
+  padding-right: 10%; /* Adjust padding to control form position */
+}
+
+/* Login Page */
+#loginPage {
+  width: 400px;
+  padding: 50px;
+  background: #ffffff; /* Light gray background for contrast */
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Input Box */
+.input-box {
+  margin-bottom: 15px;
+}
+
+.input-box label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.input-box input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Password Container */
+.password-container {
+  position: relative;
+}
+
+.password-container .eye {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+/* Remember Me & Forgot Password */
+.remember-forgot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.remember-forgot button {
+  border: none;
+  background: none;
+  color: blue;
+  cursor: pointer;
+}
+
+/* Submit Button */
+.submit-button {
+  text-align: center;
+}
+
+.button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: #45a049;
+}
+
+/* Register Section */
+.register {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.register button {
+  border: none;
+  background: none;
+  color: blue;
+  cursor: pointer;
+}
