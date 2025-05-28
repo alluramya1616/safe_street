@@ -1,350 +1,5 @@
 
-// import React, { useState, useEffect, useRef } from 'react';
-// import {
-//   View,
-//   Text,
-//   Button,
-//   Image,
-//   TextInput,
-//   Alert,
-//   TouchableOpacity,
-//   ScrollView,
-//   Linking,
-// } from 'react-native';
-// import * as ImagePicker from 'expo-image-picker';
-// import * as Location from 'expo-location';
-// import { Picker } from '@react-native-picker/picker';
 
-// export default function ReportScreen({ navigation }) {
-//   const scrollRef = useRef();
-
-//   const [imageUri, setImageUri] = useState(null);
-//   const [description, setDescription] = useState('');
-//   const [uploadStatus, setUploadStatus] = useState(null);
-//   //const [stars, setStars] = useState(0);
-//   const [city, setCity] = useState('');
-//   const [area, setArea] = useState('');
-//   const [location, setLocation] = useState(null);
-//   const [locationText, setLocationText] = useState('');
-
-//   const cities = {
-//     Chennai: ["T. Nagar",
-//   "Velachery",
-//   "Adyar",
-//   "Anna Nagar",
-//   "Kodambakkam",
-//   "Mylapore",
-//   "Nungambakkam",
-//   "Tambaram",
-//   "Guindy",
-//   "Besant Nagar"],
-//   Delhi: ["Connaught Place",
-//   "Karol Bagh",
-//   "Chanakyapuri",
-//   "Saket",
-//   "Hauz Khas",
-//   "Lajpat Nagar",
-//   "Rohini",
-//   "Dwarka",
-//   "Vasant Kunj",
-//   "Pitampura"],
-//     Hyderabad: [
-//       "Narayanaguda",
-//       "Himayathnagar",
-//       "Banjara Hills",
-//       "Jubilee Hills",
-//       "Madhapur",
-//       "Gachibowli",
-//       "Begumpet",
-//       "Ameerpet",
-//       "Kukatpally",
-//       "Secunderabad",
-//       "Somajiguda",
-//       "Mehdipatnam",
-//       "Charminar",
-//       "Dilsukhnagar",
-//       "LB Nagar"
-//     ]
-    
-//   };
-//  //request permissin on load
-//   useEffect(() => {
-//     (async () => {
-//       const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-//       const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-//       const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
-
-//       if (
-//         cameraStatus !== 'granted' ||
-//         mediaStatus !== 'granted' ||
-//         locationStatus !== 'granted'
-//       ) {
-//         Alert.alert('Permissions Required', 'Please enable camera, media, and location permissions.');
-//       }
-//     })();
-//   }, []);
-//   const handleGetLocation = async () => {
-//     try {
-//       const loc = await Location.getCurrentPositionAsync({});
-//       setLocation(loc);  // this should be setGeoLocation ideally
-//       const coords = `${loc.coords.latitude.toFixed(6)}, ${loc.coords.longitude.toFixed(6)}`;
-//       setLocationText(coords);
-  
-//       // Open location in Google Maps
-//       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${loc.coords.latitude},${loc.coords.longitude}`;
-//       Linking.openURL(mapsUrl);
-//     } catch (error) {
-//       Alert.alert('Error', 'Failed to get location');
-//     }
-//   };
-//   // const handleUpload = async () => {
-//   //   if (!imageUri || !city || !area || !location) {
-//   //     Alert.alert("Error", "Please provide image and full location.");
-//   //     return;
-//   //   }
-  
-//   //   try {
-//   //     const formData = new FormData();
-//   //     formData.append("file", {
-//   //       uri: imageUri,
-//   //       type: "image/jpeg",
-//   //       name: "upload.jpg",
-//   //     });
-  
-//   //     formData.append("upload_preset", "road_report_preset");
-  
-//   //     const cloudinaryRes = await fetch("https://api.cloudinary.com/v1_1/dpzswyrhn/image/upload", {
-//   //       method: "POST",
-//   //       body: formData,
-//   //     });
-  
-//   //     const cloudinaryData = await cloudinaryRes.json();
-//   //     if (!cloudinaryData.secure_url) {
-//   //       throw new Error("Cloudinary upload failed");
-//   //     }
-  
-//   //     const imageUrl = cloudinaryData.secure_url;
-  
-//   //     // ✅ Extract and send just lat and lon
-//   //     const coordsArray = [
-//   //       location.coords.latitude,
-//   //       location.coords.longitude,
-//   //     ];
-  
-//   //     const res = await fetch("http://192.168.156.157:8000/api/predict", {
-//   //       method: "POST",
-//   //       headers: {
-//   //         "Content-Type": "application/json",
-//   //       },
-//   //       body: JSON.stringify({
-//   //         imageUrl,
-//   //         location: coordsArray, // This is now [lat, lon]
-//   //       }),
-//   //     });
-  
-//   //     const data = await res.json();
-//   //     console.log("✅ Upload and prediction success:", data);
-//   //     Alert.alert("Success", "Prediction uploaded!");
-//   //     navigation.navigate("UploadSuccess");
-//   //   } catch (error) {
-//   //     console.error("❌ Upload error:", error.message);
-//   //     Alert.alert("Error", error.message);
-//   //   }
-//   // };
-//   const handleUpload = async () => {
-//     if (!imageUri || !city || !area || !location) {
-//       Alert.alert("Error", "Please provide image and full location.");
-//       return;
-//     }
-  
-//     try {
-//       const formData = new FormData();
-//       formData.append("file", {
-//         uri: imageUri,
-//         type: "image/jpeg",
-//         name: "upload.jpg",
-//       });
-  
-//       formData.append("upload_preset", "road_report_preset");
-  
-//       const cloudinaryRes = await fetch("https://api.cloudinary.com/v1_1/dpzswyrhn/image/upload", {
-//         method: "POST",
-//         body: formData,
-//       });
-  
-//       const cloudinaryData = await cloudinaryRes.json();
-//       if (!cloudinaryData.secure_url) {
-//         throw new Error("Cloudinary upload failed");
-//       }
-  
-//       const imageUrl = cloudinaryData.secure_url;
-  
-//       const coordsArray = [
-//         location.coords.latitude,
-//         location.coords.longitude,
-//       ];
-  
-//       // Send data to your server but don't wait for the prediction result
-//       fetch("http://192.168.73.232:8000/api/predict", {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify({
-//           imageUrl,
-//           location: coordsArray,
-//         }),
-//       }).catch(error => {
-//         console.error("❌ Background server error:", error.message);
-//       });
-  
-//       // Immediately navigate to success screen
-//       navigation.navigate("UploadSuccess");
-//       Alert.alert("Success", "Image uploaded. Prediction will be processed shortly.");
-  
-//     } catch (error) {
-//       console.error("❌ Upload error:", error.message);
-//       Alert.alert("Error", error.message);
-//     }
-//   };  
-//   return (
-//     <ScrollView
-//       ref={scrollRef}
-//       style={{ flex: 1, backgroundColor: '#fff' }}
-//       contentContainerStyle={{ padding: 20, paddingBottom: 60 }}
-//       keyboardShouldPersistTaps="handled"
-//     >
-//       <Text style={{ fontSize: 30, fontWeight: 'bold', marginBottom: 20 ,marginTop:20,marginleft:20,}}>
-//         Report an Incident
-//       </Text>
-
-//       <Button
-//         title="📷 Take Picture"
-//         onPress={async () => {
-//           const result = await ImagePicker.launchCameraAsync();
-//           if (!result.canceled) {
-//             setImageUri(result.assets[0].uri);
-//           }
-//         }}
-//       />
-
-//       <View style={{ marginVertical: 10 }}>
-//         <Button
-//           title="🖼️ Select from Gallery"
-//           onPress={async () => {
-//             const result = await ImagePicker.launchImageLibraryAsync();
-//             if (!result.canceled) {
-//               setImageUri(result.assets[0].uri);
-//             }
-//           }}
-//         />
-//       </View>
-
-//       {imageUri && (
-//         <Image
-//           source={{ uri: imageUri }}
-//           style={{ width: '100%', height: 200, marginVertical: 10, borderRadius: 10 }}
-//         />
-//       )}
-
-//       <Text style={{ marginTop: 10 }}>Select City:</Text>
-//       <Picker
-//         selectedValue={city}
-//         onValueChange={(val) => {
-//           setCity(val);
-//           setArea('');
-//         }}
-//         style={{ backgroundColor: '#f0f0f0', marginBottom: 10 }}
-//       >
-//         <Picker.Item label="-- Select City --" value="" />
-//         {Object.keys(cities).map((cityName) => (
-//           <Picker.Item key={cityName} label={cityName} value={cityName} />
-//         ))}
-//       </Picker>
-
-//       {city !== '' && (
-//         <>
-//           <Text>Select Area:</Text>
-//           <Picker
-//             selectedValue={area}
-//             onValueChange={setArea}
-//             style={{ backgroundColor: '#f0f0f0', marginBottom: 10 }}
-//           >
-//             <Picker.Item label="-- Select Area --" value="" />
-//             {cities[city].map((areaName) => (
-//               <Picker.Item key={areaName} label={areaName} value={areaName} />
-//             ))}
-//           </Picker>
-//         </>
-//       )}
-
-//       <TextInput
-//         placeholder="Enter description"
-//         value={description}
-//         onChangeText={setDescription}
-//         multiline
-//         numberOfLines={4}
-//         style={{
-//           borderWidth: 1,
-//           borderColor: '#ccc',
-//           padding: 10,
-//           borderRadius: 8,
-//           marginBottom: 10,
-//           backgroundColor: '#f9f9f9',
-//         }}
-//       />
-
-//       <TouchableOpacity
-//         onPress={handleGetLocation}
-//         style={{
-//           backgroundColor: '#4444aa',
-//           padding: 12,
-//           borderRadius: 10,
-//           alignItems: 'center',
-//           marginBottom: 10,
-//         }}
-//       >
-//         <Text style={{ color: 'white', fontSize: 16 }}>
-//           📍 Get Live Location
-//         </Text>
-//       </TouchableOpacity>
-
-//       {locationText !== '' && (
-//         <Text style={{ marginBottom: 10 }}>
-//           📌 Location: {locationText}
-//         </Text>
-//       )}
-
-//       <TouchableOpacity
-//         onPress={handleUpload}
-//         style={{
-//           backgroundColor: '#007b00',
-//           padding: 15,
-//           borderRadius: 10,
-//           alignItems: 'center',
-//           marginBottom: 20,
-//         }}
-//       >
-//         <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>
-//           Upload
-//         </Text>
-//       </TouchableOpacity>
-
-//       {uploadStatus === 'success' && (
-//         <Text style={{ color: 'green', fontWeight: 'bold', marginBottom: 10 }}>
-//           ✅ Image uploaded successfully...
-//         </Text>
-//       )}
-//       {uploadStatus === 'failed' && (
-//         <Text style={{ color: 'red', fontWeight: 'bold', marginBottom: 10 }}>
-//           ❌ Please fill all fields before uploading.
-//         </Text>
-//       )}
-
-//       {/* <Text style={{ fontSize: 16 }}>⭐ Stars Earned: {stars}</Text> */}
-//     </ScrollView>
-//   );
-// }
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -360,17 +15,17 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ReportScreen({ navigation }) {
   const scrollRef = useRef();
 
   const [imageUri, setImageUri] = useState(null);
   const [description, setDescription] = useState('');
-  const [uploadStatus, setUploadStatus] = useState(null);
   const [city, setCity] = useState('');
-  const [location, setLocation] = useState(null); // For raw coords
-  const [locationText, setLocationText] = useState(""); // Short display
-  const [fullAddress, setFullAddress] = useState(""); // Full address display
+  const [location, setLocation] = useState(null); // raw coords
+  const [locationText, setLocationText] = useState("");
+  const [fullAddress, setFullAddress] = useState("");
 
   const indianStates = [
     'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -391,37 +46,36 @@ export default function ReportScreen({ navigation }) {
         Alert.alert('Permissions Required', 'Please enable camera, media, and location permissions.');
       }
     })();
-   }, []);
-   const handleGetLocation = async () => {
+  }, []);
+
+  const handleGetLocation = async () => {
     try {
       const loc = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = loc.coords;
-  
-      // Set only latitude/longitude for upload use
+
       setLocation({ latitude, longitude });
-  
+
       const latStr = latitude.toFixed(6);
       const lonStr = longitude.toFixed(6);
       setLocationText(`${latStr}, ${lonStr}`);
-  
-      // Reverse geocode for full address
+
       const geocode = await Location.reverseGeocodeAsync({ latitude, longitude });
       if (geocode.length > 0) {
         const address = geocode[0];
         const area = address.suburb || address.neighborhood || address.locality || address.name || "Unknown Area";
         const cityName = address.city || address.district || "Unknown City";
         const stateName = address.region || "Unknown State";
-  
+
         const formatted = `Area: ${area}
-  City: ${cityName}
-  State: ${stateName}
-  Latitude: ${latStr}
-  Longitude: ${lonStr}`;
-  
+City: ${cityName}
+State: ${stateName}
+Latitude: ${latStr}
+Longitude: ${lonStr}`;
+
         setFullAddress(formatted);
       }
-  
-      // Optional: open maps
+
+      // Open in Google Maps
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latStr},${lonStr}`;
       Linking.openURL(mapsUrl);
     } catch (error) {
@@ -429,41 +83,68 @@ export default function ReportScreen({ navigation }) {
       console.error(error);
     }
   };
-  
-    const handleUpload = async () => {
-    if (!imageUri || !location) {
-      Alert.alert("Error", "Please provide image and full location.");
+
+  // Save report to AsyncStorage
+  const saveReport = async (report) => {
+    try {
+      const storedReports = await AsyncStorage.getItem('reports');
+      const reports = storedReports ? JSON.parse(storedReports) : [];
+      reports.push(report);
+      await AsyncStorage.setItem('reports', JSON.stringify(reports));
+    } catch (error) {
+      console.error('Failed to save report:', error);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!imageUri || !location || !description || !city) {
+      Alert.alert("Error", "Please fill all fields before uploading.");
       return;
     }
-  
+
     try {
+      // Upload to Cloudinary
       const formData = new FormData();
       formData.append("file", {
         uri: imageUri,
         type: "image/jpeg",
         name: "upload.jpg",
       });
-  
       formData.append("upload_preset", "road_report_preset");
-  
+
       const cloudinaryRes = await fetch("https://api.cloudinary.com/v1_1/dpzswyrhn/image/upload", {
         method: "POST",
         body: formData,
       });
-  
+
       const cloudinaryData = await cloudinaryRes.json();
+
       if (!cloudinaryData.secure_url) {
         throw new Error("Cloudinary upload failed");
       }
-  
+
       const imageUrl = cloudinaryData.secure_url;
-  
+
       const coordsArray = [
         location.latitude,
         location.longitude,
       ];
-  
-      // Send data to your server but don't wait for the prediction result
+
+      // Create report object
+      const newReport = {
+        id: Date.now().toString(),
+        coords: coordsArray,
+        address: fullAddress || city,
+        time: new Date().toISOString(),
+        description,
+        imageUrl,
+        state: city,
+      };
+
+      // Save locally
+      await saveReport(newReport);
+
+      // Optionally send to server
       fetch("http://192.168.73.232:8000/api/predict", {
         method: "POST",
         headers: {
@@ -476,16 +157,16 @@ export default function ReportScreen({ navigation }) {
       }).catch(error => {
         console.error("❌ Background server error:", error.message);
       });
-  
-      // Immediately navigate to success screen
+
       navigation.navigate("UploadSuccess");
-      Alert.alert("Success", "Image uploaded. Prediction will be processed shortly.");
-  
+      Alert.alert("Success", "Image uploaded and report saved locally.");
+
     } catch (error) {
       console.error("❌ Upload error:", error.message);
       Alert.alert("Error", error.message);
     }
-  }; 
+  };
+
   return (
     <ImageBackground source={require("../assets/pic3.jpg")} style={{ flex: 1, resizeMode: 'cover' }}>
       <ScrollView
@@ -602,22 +283,8 @@ export default function ReportScreen({ navigation }) {
             width: 250,
           }}
         >
-          <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>
-          ⬆️ Upload Report
-          </Text>
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>Upload Report</Text>
         </TouchableOpacity>
-
-        {/* Upload Status Message */}
-        {uploadStatus === 'success' && (
-          <Text style={{ color: 'green', fontWeight: 'bold', marginBottom: 10 }}>
-            ✅ Image uploaded successfully...
-          </Text>
-        )}
-        {uploadStatus === 'failed' && (
-          <Text style={{ color: 'red', fontWeight: 'bold', marginBottom: 10 }}>
-            ❌ Please fill all fields before uploading.
-          </Text>
-        )}
       </ScrollView>
     </ImageBackground>
   );
@@ -625,15 +292,15 @@ export default function ReportScreen({ navigation }) {
 
 const styles = {
   button: {
-    backgroundColor: '#D8BFD8',
-    padding: 15,
+    backgroundColor: '#ADD8E6',
+    padding: 12,
     borderRadius: 10,
-    alignItems: 'center',
     marginBottom: 10,
     width: 250,
+    alignItems: 'center',
   },
   buttonText: {
-    color: 'black',
-    fontSize: 16,
+    color: '#000',
+    fontWeight: 'bold',
   },
 };

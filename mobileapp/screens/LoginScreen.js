@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   SafeAreaView,
@@ -6,16 +7,17 @@ import {
   View,
   Text,
   Image,
-  Alert
+  Alert,
 } from "react-native";
 import { TextInput } from "react-native-paper";
 
-// 👁️ Icon button for password visibility toggle
+// Icon button for password visibility toggle
 const IconButton = ({ icon = "eye-off", color = "#C4C4C4", onPress }) => (
   <TextInput.Icon icon={icon} color={color} onPress={onPress} />
 );
 
-const LoginScreen = ({ navigation, setIsLoggedIn }) => {
+const LoginScreen = ({ navigation, setIsLoggedIn, setUserInfo }) => {
+  const [name, setName] = useState(""); // New Name Field
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -24,15 +26,13 @@ const LoginScreen = ({ navigation, setIsLoggedIn }) => {
     setShowPassword(!showPassword);
   };
 
-  // login function for prototyping (you can replace with local logic or API later)
   const login = () => {
-    if (email === "" || password === "") {
-      Alert.alert("Login Failed", "Please enter both email and password.");
+    if (name === "" || email === "" || password === "") {
+      Alert.alert("Login Failed", "Please enter your name, email, and password.");
     } else {
-      Alert.alert("Login Successful", `Welcome back, ${email}!`);
-      // Navigate to Home or other screen if needed
-      //navigation.navigate("Home");
-      setIsLoggedIn(true); // 🔥 Set user as logged in
+      setUserInfo({ name, email });
+      setIsLoggedIn(true);
+      Alert.alert("Login Successful", `Welcome back, ${name}!`);
     }
   };
 
@@ -43,20 +43,30 @@ const LoginScreen = ({ navigation, setIsLoggedIn }) => {
         <Image style={styles.logo} source={require("../assets/logo.png")} />
       </View>
 
-      {/* SAFE STREET text moved below logo */}
+      {/* SAFE STREET text */}
       <View style={styles.safeStreetContainer}>
         <Text style={styles.safeStreetText}>SAFE STREET</Text>
       </View>
 
-      {/* Login text */}
+      {/* Login title */}
       <View style={styles.loginContainer}>
         <Text style={styles.loginText}>Login</Text>
       </View>
 
-      {/* Email and Password Inputs */}
+      {/* Inputs */}
       <View style={styles.inputContainer}>
         <TextInput
+          placeholder="Name"
+          value={name}
+          onChangeText={setName}
+          autoCapitalize="words"
+          style={styles.textInput}
+          placeholderTextColor="#aaa"
+          theme={{ colors: { primary: "#000" } }}
+        />
+        <TextInput
           placeholder="Email"
+          value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           style={styles.textInput}
@@ -67,9 +77,9 @@ const LoginScreen = ({ navigation, setIsLoggedIn }) => {
           secureTextEntry={!showPassword}
           value={password}
           onChangeText={setPassword}
-          style={styles.textInput}
           placeholder="Password"
           autoCapitalize="none"
+          style={styles.textInput}
           placeholderTextColor="#aaa"
           right={
             <IconButton
@@ -87,12 +97,12 @@ const LoginScreen = ({ navigation, setIsLoggedIn }) => {
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
-      {/* Link to Register */}
+      {/* Register Link */}
       <TouchableOpacity
         style={styles.loginLink}
         onPress={() => navigation.navigate("Register")}
       >
-        <Text style={styles.linkText}>Have an Account? Register</Text>
+        <Text style={styles.linkText}>Don't have an account? Register</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -109,7 +119,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10, 
+    marginBottom: 10,
   },
   logo: {
     width: 300,
@@ -119,7 +129,7 @@ const styles = StyleSheet.create({
   safeStreetContainer: {
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24, // Increased space after SAFE STREET text
+    marginBottom: 24,
   },
   safeStreetText: {
     fontSize: 32,
@@ -179,3 +189,4 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
+

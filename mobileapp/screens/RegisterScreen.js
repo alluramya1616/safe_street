@@ -12,7 +12,7 @@ import {
 import PhoneInput from "react-native-phone-number-input";
 import { TextInput } from "react-native-paper";
 
-const RegisterScreen = ({ navigation, setIsLoggedIn }) => {
+const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneInput, setPhoneInput] = useState(null);
@@ -22,43 +22,66 @@ const RegisterScreen = ({ navigation, setIsLoggedIn }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  //controls visibity of the password(swichting b/w 2 states i.e show and hide)
   const toggleShowPassword = () => setShowPassword(!showPassword);
-  const toggleShowConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
+  const toggleShowConfirmPassword = () =>
+    setShowConfirmPassword(!showConfirmPassword);
 
   const register = () => {
-    if (name === "" || email === "" || password === "" || confirmPassword === "") {
+    if (
+      name === "" ||
+      email === "" ||
+      password === "" ||
+      confirmPassword === ""
+    ) {
       Alert.alert("Validation Error", "Please fill out all the fields!");
-    } else if (phoneNumber !== "" && !phoneInput?.isValidNumber(phoneNumber)) {
+    } else if (
+      phoneNumber !== "" &&
+      !phoneInput?.isValidNumber(phoneNumber)
+    ) {
       Alert.alert("Validation Error", "Invalid Phone Number");
     } else if (password !== confirmPassword) {
       Alert.alert("Validation Error", "Passwords do not match");
     } else {
-      console.log("User Registered:", {
+      const user = {
         name,
-        phoneNumber,
         email,
-        password,
-      });
-      Alert.alert("Success", `Welcome, ${name}! Registration successful.`);
-      setIsLoggedIn(true);
+        phone: phoneNumber,
+        password, // Note: For real apps, never store plain passwords
+      };
+
+      // You can store `user` in AsyncStorage or send it to a backend here
+
+      Alert.alert(
+        "Success",
+        "Registration successful. Please login to continue.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.navigate("Login", {
+                registeredEmail: email,
+              });
+            },
+          },
+        ]
+      );
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Logo and SAFE STREET text */}
       <View style={styles.logoContainer}>
-        <Image style={styles.logo} source={require("../assets/logo.png")} />
+        <Image
+          style={styles.logo}
+          source={require("../assets/logo.png")}
+        />
         <Text style={styles.safeStreetText}>SAFE STREET</Text>
       </View>
 
-      {/* Register Title */}
       <View style={styles.titleContainer}>
         <Text style={styles.registerText}>Register</Text>
       </View>
 
-      {/* Input Fields */}
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="Name"
@@ -69,15 +92,13 @@ const RegisterScreen = ({ navigation, setIsLoggedIn }) => {
           placeholderTextColor="#aaa"
           theme={{ colors: { primary: "#000" } }}
         />
+
         <PhoneInput
           ref={(input) => setPhoneInput(input)}
           defaultCode="IN"
           placeholder="Phone Number"
           value={phoneNumber}
-          onChangeFormattedText={(text) => {
-            console.log("Formatted Phone Number:", text);
-            setPhoneNumber(text);
-          }}
+          onChangeFormattedText={(text) => setPhoneNumber(text)}
           containerStyle={styles.phoneInputContainer}
           textContainerStyle={styles.phoneInputTextContainer}
           textInputStyle={styles.phoneInputText}
@@ -87,6 +108,7 @@ const RegisterScreen = ({ navigation, setIsLoggedIn }) => {
             style: { color: "#000" },
           }}
         />
+
         <TextInput
           placeholder="Email"
           value={email}
@@ -96,6 +118,7 @@ const RegisterScreen = ({ navigation, setIsLoggedIn }) => {
           placeholderTextColor="#aaa"
           theme={{ colors: { primary: "#000" } }}
         />
+
         <TextInput
           placeholder="Password"
           value={password}
@@ -113,6 +136,7 @@ const RegisterScreen = ({ navigation, setIsLoggedIn }) => {
           }
           theme={{ colors: { primary: "#000" } }}
         />
+
         <TextInput
           placeholder="Confirm Password"
           value={confirmPassword}
@@ -132,12 +156,10 @@ const RegisterScreen = ({ navigation, setIsLoggedIn }) => {
         />
       </View>
 
-      {/* Register Button */}
       <TouchableOpacity style={styles.registerButton} onPress={register}>
         <Text style={styles.registerButtonText}>Register</Text>
       </TouchableOpacity>
 
-      {/* Link to Login */}
       <TouchableOpacity
         style={styles.loginLink}
         onPress={() => navigation.navigate("Login")}
@@ -244,3 +266,4 @@ const styles = StyleSheet.create({
 });
 
 export default RegisterScreen;
+

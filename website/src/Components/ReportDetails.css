@@ -3,7 +3,7 @@
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  background: url("C:/Users/Lenovo/OneDrive/Attachments/Desktop/SafeStreet/website/src/images/reportbackground.jpeg") no-repeat center center fixed;
+  background: url("../images/reportbackground.jpeg") no-repeat center center fixed;
   background-size: cover;
   display: flex;
   flex-direction: column;

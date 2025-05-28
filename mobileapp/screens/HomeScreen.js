@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import {
   SafeAreaView,
@@ -17,7 +18,7 @@ import * as Location from "expo-location";
 
 const { width } = Dimensions.get("window");
 
-const HomeScreen = ({ setIsLoggedIn }) => {
+const HomeScreen = ({ setIsLoggedIn, userInfo }) => {
   const [userLocation, setUserLocation] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("traffic");
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
@@ -28,7 +29,7 @@ const HomeScreen = ({ setIsLoggedIn }) => {
     {
       id: "t1",
       coords: [28.6139, 77.209],
-      address: "SR nagar , Delhi",
+      address: "SR Nagar, Delhi",
       time: new Date().toISOString(),
       description: "Heavy traffic near metro station due to road work.",
     },
@@ -37,7 +38,7 @@ const HomeScreen = ({ setIsLoggedIn }) => {
       coords: [19.076, 72.8777],
       address: "Marine Drive, Mumbai",
       time: new Date().toISOString(),
-      description: "heavy traffic due to local festival.",
+      description: "Heavy traffic due to local festival.",
     },
   ];
 
@@ -105,16 +106,15 @@ const HomeScreen = ({ setIsLoggedIn }) => {
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
     setIsProfileDropdownVisible(false);
+    setIsLoggedIn(false);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Click outside to close the dropdown */}
       <TouchableWithoutFeedback onPress={() => setIsProfileDropdownVisible(false)}>
         <View style={{ flex: 1 }}>
-          {/* Header */}
+          {/* Header: Picker and Profile */}
           <View style={styles.header}>
             <Picker
               selectedValue={selectedCategory}
@@ -125,7 +125,6 @@ const HomeScreen = ({ setIsLoggedIn }) => {
               <Picker.Item label="Road Damage" value="road" />
             </Picker>
 
-            {/* Profile Button */}
             <View style={{ position: "relative" }}>
               <TouchableOpacity
                 style={styles.profileButton}
@@ -134,11 +133,11 @@ const HomeScreen = ({ setIsLoggedIn }) => {
                 <Ionicons name="person-circle-outline" size={36} color="#16247d" />
               </TouchableOpacity>
 
-              {/* Profile Dropdown */}
               {isProfileDropdownVisible && (
                 <View style={styles.profileDropdown}>
-                  <Text style={styles.nameText}>Poojitha</Text>
-                  <Text style={styles.emailText}>poojitha@gmail.com</Text>
+                  {/* Changed username to name */}
+                  <Text style={styles.nameText}>{userInfo?.name || "User"}</Text>
+                  <Text style={styles.emailText}>{userInfo?.email || "email@example.com"}</Text>
                   <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Text style={styles.logoutButtonText}>Logout</Text>
                   </TouchableOpacity>
@@ -199,7 +198,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    zIndex: 10, // Important to show dropdown above map
+    zIndex: 10,
   },
   picker: {
     height: 50,
