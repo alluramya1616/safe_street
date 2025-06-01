@@ -167,7 +167,6 @@ const Dashboard = () => {
           <Link to="/home">Home</Link>
           <Link to="/dashboard">Dashboard</Link>
           <Link to="/about">About</Link>
-          <Link to="/help">Help</Link>
           <Link to="/" onClick={() => localStorage.removeItem("token")}>Log Out</Link>
         </div>
       </nav>
