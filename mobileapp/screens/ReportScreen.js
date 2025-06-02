@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -9,21 +10,25 @@ import {
   ScrollView,
   Linking,
   ImageBackground,
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 
 export default function ReportScreen({ navigation }) {
   const scrollRef = useRef();
 
   const [imageUri, setImageUri] = useState(null);
   const [description, setDescription] = useState('');
+  const [uploadStatus, setUploadStatus] = useState(null);
   const [city, setCity] = useState('');
-  const [location, setLocation] = useState(null); // raw coords
-  const [locationText, setLocationText] = useState("");
-  const [fullAddress, setFullAddress] = useState("");
+  const [location, setLocation] = useState(null);
+  const [locationText, setLocationText] = useState('');
+  const [fullAddress, setFullAddress] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const indianStates = [
     'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -50,7 +55,6 @@ export default function ReportScreen({ navigation }) {
     try {
       const loc = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = loc.coords;
-
       setLocation({ latitude, longitude });
 
       const latStr = latitude.toFixed(6);
@@ -73,7 +77,6 @@ Longitude: ${lonStr}`;
         setFullAddress(formatted);
       }
 
-      // Open in Google Maps
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latStr},${lonStr}`;
       Linking.openURL(mapsUrl);
     } catch (error) {
@@ -82,102 +85,151 @@ Longitude: ${lonStr}`;
     }
   };
 
-  // Save report to AsyncStorage
-  const saveReport = async (report) => {
+  const saveReportLocally = async (report) => {
     try {
-      const storedReports = await AsyncStorage.getItem('reports');
-      const reports = storedReports ? JSON.parse(storedReports) : [];
+      const existing = await AsyncStorage.getItem('reports');
+      let reports = existing ? JSON.parse(existing) : [];
       reports.push(report);
       await AsyncStorage.setItem('reports', JSON.stringify(reports));
-    } catch (error) {
-      console.error('Failed to save report:', error);
+      console.log("✅ Report saved locally");
+    } catch (err) {
+      console.error("❌ Failed to save report locally:", err);
     }
   };
 
-  const handleUpload = async () => {
-    if (!imageUri || !location || !description || !city) {
-      Alert.alert("Error", "Please fill all fields before uploading.");
+  // Clear form fields helper
+  const clearForm = () => {
+    setImageUri(null);
+    setDescription('');
+    setCity('');
+    setLocation(null);
+    setLocationText('');
+    setFullAddress('');
+  };
+const handleUpload = async () => {
+  if (!imageUri || !location) {
+    Alert.alert("Error", "Please provide image and full location.");
+    return;
+  }
+
+  setUploading(true);
+
+  try {
+    // Prepare form data for Cloudinary upload
+    const formData = new FormData();
+    formData.append("file", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "upload.jpg",
+    });
+    formData.append("upload_preset", "road_report_preset");
+
+    // Upload image to Cloudinary
+    const cloudinaryRes = await fetch(
+      "https://api.cloudinary.com/v1_1/dpzswyrhn/image/upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const cloudinaryData = await cloudinaryRes.json();
+
+    if (!cloudinaryData.secure_url) {
+      throw new Error("Cloudinary upload failed");
+    }
+
+    const imageUrl = cloudinaryData.secure_url;
+    const coordsArray = [location.latitude, location.longitude];
+
+    // Call your prediction API
+    const predictRes = await fetch("http://192.168.11.157:8000/api/predict", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ imageUrl, location: coordsArray }),
+    });
+
+    // If server returns HTTP error (like 500 or 400)
+    if (!predictRes.ok) {
+      const errorText = await predictRes.text();
+      console.error(
+        "Prediction API error response:",
+        predictRes.status,
+        errorText
+      );
+      throw new Error(`Prediction API error: ${predictRes.status} ${errorText}`);
+    }
+
+    // Parse JSON response
+    const predictData = await predictRes.json();
+    console.log("Prediction API response:", predictData);
+
+    // Check if response contains an error key - means invalid image
+    if (predictData.error) {
+      Alert.alert(
+        "Invalid Image",
+        predictData.error,
+        [
+          {
+            text: "OK",
+            onPress: () => clearForm(),
+          },
+        ],
+        { cancelable: false }
+      );
+      setUploading(false);
       return;
     }
 
-    try {
-      // Upload to Cloudinary
-      const formData = new FormData();
-      formData.append("file", {
-        uri: imageUri,
-        type: "image/jpeg",
-        name: "upload.jpg",
-      });
-      formData.append("upload_preset", "road_report_preset");
+    // Now safely extract prediction details (valid response guaranteed here)
+    const damage = Array.isArray(predictData.typeOfDamage)
+      ? predictData.typeOfDamage.join(", ")
+      : "Unknown";
 
-      const cloudinaryRes = await fetch("https://api.cloudinary.com/v1_1/dpzswyrhn/image/upload", {
-        method: "POST",
-        body: formData,
-      });
+    const severity = predictData.severity || "Unknown";
 
-      const cloudinaryData = await cloudinaryRes.json();
+    const objects = Array.isArray(predictData.objectsDetected)
+      ? predictData.objectsDetected.join(", ")
+      : "None";
 
-      if (!cloudinaryData.secure_url) {
-        throw new Error("Cloudinary upload failed");
-      }
+    // Prepare local report object
+    const localReport = {
+      imageUrl,
+      description,
+      state: city,
+      coordinates: coordsArray,
+      fullAddress,
+      timestamp: new Date().toISOString(),
+      damage,
+      severity,
+      objects,
+    };
 
-      const imageUrl = cloudinaryData.secure_url;
+    await saveReportLocally(localReport);
 
-      const coordsArray = [
-        location.latitude,
-        location.longitude,
-      ];
-
-      // Create report object
-      const newReport = {
-        id: Date.now().toString(),
-        coords: coordsArray,
-        address: fullAddress || city,
-        time: new Date().toISOString(),
-        description,
-        imageUrl,
-        state: city,
-      };
-
-      // Save locally
-      await saveReport(newReport);
-
-      // Optionally send to server
-      fetch("http://192.168.73.232:8000/api/predict", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          imageUrl,
-          location: coordsArray,
-        }),
-      }).catch(error => {
-        console.error("❌ Background server error:", error.message);
-      });
-
-      navigation.navigate("UploadSuccess");
-      Alert.alert("Success", "Image uploaded and report saved locally.");
-
-    } catch (error) {
-      console.error("❌ Upload error:", error.message);
-      Alert.alert("Error", error.message);
-    }
-  };
+    setUploading(false);
+    navigation.navigate("UploadSuccess");
+  } catch (error) {
+    console.error("❌ Upload error:", error.message);
+    setUploading(false);
+    Alert.alert("Error", error.message);
+  }
+};
 
   return (
-    <ImageBackground source={require("../assets/pic3.jpg")} style={{ flex: 1, resizeMode: 'cover' }}>
+    <ImageBackground source={require("../assets/d2.jpeg")} style={{ flex: 1, resizeMode: 'cover' }}>
       <ScrollView
         ref={scrollRef}
         style={{ flex: 1 }}
         contentContainerStyle={{ padding: 20, paddingBottom: 60, alignItems: 'center' }}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={{ fontSize: 30, fontWeight: 'bold', marginBottom: 20, marginTop: 20 }}>
+        <Text style={{ fontSize: 30, fontWeight: 'bold', marginBottom: 20, marginTop: 20,color: 'white' }}>
           Report an Incident
         </Text>
 
-        {/* Take Picture */}
         <TouchableOpacity
           onPress={async () => {
             const result = await ImagePicker.launchCameraAsync();
@@ -186,11 +238,11 @@ Longitude: ${lonStr}`;
             }
           }}
           style={styles.button}
+          disabled={uploading}
         >
           <Text style={styles.buttonText}>📷 Take Picture</Text>
         </TouchableOpacity>
 
-        {/* Select from Gallery */}
         <TouchableOpacity
           onPress={async () => {
             const result = await ImagePicker.launchImageLibraryAsync();
@@ -199,11 +251,11 @@ Longitude: ${lonStr}`;
             }
           }}
           style={styles.button}
+          disabled={uploading}
         >
           <Text style={styles.buttonText}>🖼️ Select from Gallery</Text>
         </TouchableOpacity>
 
-        {/* Show selected image */}
         {imageUri && (
           <Image
             source={{ uri: imageUri }}
@@ -211,94 +263,109 @@ Longitude: ${lonStr}`;
           />
         )}
 
-        {/* City/State Picker */}
-        <Text style={{ marginTop: 10 }}>Select State:</Text>
+        {/* <Text style={{ marginTop: 10 }}>Select State:</Text> */}
         <View style={{ backgroundColor: '#ADD8E6', marginBottom: 10, borderRadius: 8, width: 250 }}>
           <Picker
             selectedValue={city}
             onValueChange={(val) => setCity(val)}
             style={{ width: '100%' }}
+            enabled={!uploading}
           >
-            <Picker.Item label="-- Select State --" value="" />
+            <Picker.Item label="Select a State" value="" />
             {indianStates.map((stateName) => (
               <Picker.Item key={stateName} label={stateName} value={stateName} />
             ))}
           </Picker>
         </View>
 
-        {/* Description Input */}
         <TextInput
-          placeholder="Enter description"
+          multiline
+          placeholder="Description"
           value={description}
           onChangeText={setDescription}
-          multiline
-          numberOfLines={4}
+          editable={!uploading}
           style={{
-            borderWidth: 1,
-            borderColor: '#ccc',
-            padding: 10,
-            borderRadius: 8,
-            marginBottom: 10,
             backgroundColor: '#ADD8E6',
+            borderRadius: 8,
+            height: 50,
             width: 250,
-            textAlignVertical: 'top',
+            padding: 10,
+            marginBottom: 10,
           }}
         />
 
-        {/* Get Live Location */}
         <TouchableOpacity
           onPress={handleGetLocation}
-          style={{
-            backgroundColor: '#FFB6C1',
-            padding: 12,
-            borderRadius: 10,
-            alignItems: 'center',
-            marginBottom: 10,
-            width: 250,
-          }}
+          style={[styles.button, { backgroundColor: '#4682B4' }]}
+          disabled={uploading}
         >
-          <Text style={{ color: 'white', fontSize: 16 }}>
-            📍 Get Live Location
-          </Text>
+          <Text style={styles.buttonText}>📍 Get Location</Text>
         </TouchableOpacity>
 
-        {/* Show Full Address */}
-        {fullAddress !== '' && (
-          <Text style={{ marginBottom: 10, textAlign: 'center' }}>
-            📌 Address: {"\n"}{fullAddress}
+        {locationText ? (
+          <Text selectable style={{ marginVertical: 10, textAlign: 'center', color: 'white' }}>
+            {locationText}
           </Text>
-        )}
+        ) : null}
 
-        {/* Upload Button */}
+        {fullAddress ? (
+          <Text selectable style={{ marginBottom: 20, textAlign: 'center',  color: 'white',whiteSpace: 'pre-line' }}>
+            {fullAddress}
+          </Text>
+        ) : null}
+
         <TouchableOpacity
           onPress={handleUpload}
+          disabled={uploading}
           style={{
-            backgroundColor: '#90EE90',
+            backgroundColor: uploading ? '#9ACD32' : '#90EE90',
             padding: 15,
             borderRadius: 10,
             alignItems: 'center',
-            marginBottom: 20,
             width: 250,
+            marginBottom: 40,
           }}
         >
-          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>Upload Report</Text>
+          <Text style={{ color: uploading ? '#666' : 'white', fontSize: 18 }}>
+            {uploading ? 'Uploading...' : 'Upload Report'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={uploading}
+        onRequestClose={() => { }}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
 
 const styles = {
   button: {
-    backgroundColor: '#ADD8E6',
-    padding: 12,
+    backgroundColor: '#00AEEF',
+    padding: 15,
     borderRadius: 10,
-    marginBottom: 10,
+    marginVertical: 8,
     width: 250,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#000',
-    fontWeight: 'bold',
+    color: 'white',
+    fontSize: 18,
   },
 };
+

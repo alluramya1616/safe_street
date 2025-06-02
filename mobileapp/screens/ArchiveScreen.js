@@ -1,155 +1,96 @@
-
 import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaView,
-  FlatList,
   View,
   Text,
+  FlatList,
   Image,
   StyleSheet,
+  ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { List } from 'react-native-paper';
 
-const ArchivesScreen = () => {
+export default function ArchiveScreen() {
   const [reports, setReports] = useState([]);
-
   useEffect(() => {
-    const loadReports = async () => {
+    const fetchReports = async () => {
       try {
+        // Use the same key 'reports' as in ReportScreen
         const storedReports = await AsyncStorage.getItem('reports');
-        if (storedReports) {
+        if (storedReports !== null) {
           setReports(JSON.parse(storedReports));
-        } else {
-          setReports([]); // no reports saved yet
         }
       } catch (error) {
-        console.error('Failed to load reports:', error);
+        console.error('❌ Error fetching reports:', error);
       }
     };
 
-    loadReports();
+    fetchReports();
   }, []);
 
-  return (
-    <SafeAreaView style={styles.container}>
-      {/* Add heading here */}
-      <Text style={styles.heading}>Previous Reportes</Text>
-
-      <FlatList
-        data={reports}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 20 }}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.item}>
-              <Text style={styles.timestamp}>
-                {new Date(item.time).toLocaleString()}
-              </Text>
-              <Text style={styles.coords}>
-                Latitude, Longitude: {item.coords.join(', ')}
-              </Text>
-              <Text style={styles.address}>
-                Address: {item.address || item.state}
-              </Text>
-            </View>
-
-            <View style={styles.accordionContainer}>
-              <List.Accordion
-                title="Description"
-                titleStyle={styles.accordionTitle}
-                left={(props) => <List.Icon {...props} icon="information" />}
-              >
-                <List.Item
-                  title={item.description || 'No description provided.'}
-                  titleStyle={styles.analysisText}
-                />
-                {item.imageUrl ? (
-                  <Image
-                    source={{ uri: item.imageUrl }}
-                    style={styles.reportImage}
-                    resizeMode="cover"
-                  />
-                ) : null}
-              </List.Accordion>
-            </View>
-          </View>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No reports found.</Text>
-          </View>
-        }
-      />
-    </SafeAreaView>
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      <Image source={{ uri: item.imageUrl }} style={styles.image} />
+      <Text style={styles.text}><Text style={styles.label}>State:</Text> {item.state}</Text>
+      <Text style={styles.text}><Text style={styles.label}>Description:</Text> {item.description}</Text>
+      <Text style={styles.text}><Text style={styles.label}>Address:</Text> {item.fullAddress}</Text>
+      <Text style={styles.text}>
+        <Text style={styles.label}>Coordinates:</Text> {item.coordinates?.[0]}, {item.coordinates?.[1]}
+      </Text>
+      <Text style={styles.text}><Text style={styles.label}>Reported At:</Text> {new Date(item.timestamp).toLocaleString()}</Text>
+    </View>
   );
-};
 
-export default ArchivesScreen;
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.header}>📂 Archived Reports</Text>
+      {reports.length === 0 ? (
+        <Text style={styles.noData}>No reports available.</Text>
+      ) : (
+        <FlatList
+          data={reports}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => index.toString()}
+        />
+      )}
+    </ScrollView>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
+    padding: 16,
+    backgroundColor: '#F5F5F5',
     flex: 1,
-    backgroundColor: '#f0f4f7',
   },
-  heading: {
-    fontSize: 22,
+  header: {
+    fontSize: 26,
     fontWeight: 'bold',
-    color: '#16247d',
-    marginVertical: 20,
-    textAlign: 'center',
+    marginBottom: 16,
     marginTop:50,
+    textAlign: 'center',
+  },
+  noData: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: 'gray',
   },
   card: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 10,
-    elevation: 3,
+    backgroundColor: '#FFF',
     padding: 12,
-  },
-  item: {
-    marginBottom: 8,
-  },
-  timestamp: {
-    fontWeight: 'bold',
-    fontSize: 14,
-    color: '#333',
-  },
-  coords: {
-    fontSize: 13,
-    color: '#555',
-    marginTop: 4,
-  },
-  address: {
-    fontSize: 13,
-    color: '#555',
-    marginTop: 2,
-  },
-  accordionContainer: {
-    marginTop: 10,
-  },
-  accordionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  analysisText: {
-    fontSize: 14,
-    color: '#444',
-  },
-  reportImage: {
-    width: '100%',
-    height: 150,
-    marginTop: 10,
     borderRadius: 10,
+    marginBottom: 16,
+    elevation: 2,
   },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    marginTop: 40,
+  image: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    marginBottom: 10,
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#999',
+  text: {
+    marginBottom: 4,
+  },
+  label: {
+    fontWeight: 'bold',
   },
 });
