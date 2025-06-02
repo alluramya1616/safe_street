@@ -315,6 +315,8 @@ import {
   ScrollView,
   Linking,
   ImageBackground,
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
@@ -331,8 +333,9 @@ export default function ReportScreen({ navigation }) {
   const [location, setLocation] = useState(null);
   const [locationText, setLocationText] = useState('');
   const [fullAddress, setFullAddress] = useState('');
+  const [uploading, setUploading] = useState(false);
 
-  const indianStates = [ /* ... list of states ... */ 
+  const indianStates = [
     'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
     'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
     'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya',
@@ -399,60 +402,126 @@ Longitude: ${lonStr}`;
     }
   };
 
-  const handleUpload = async () => {
-    if (!imageUri || !location) {
-      Alert.alert("Error", "Please provide image and full location.");
+  // Clear form fields helper
+  const clearForm = () => {
+    setImageUri(null);
+    setDescription('');
+    setCity('');
+    setLocation(null);
+    setLocationText('');
+    setFullAddress('');
+  };
+const handleUpload = async () => {
+  if (!imageUri || !location) {
+    Alert.alert("Error", "Please provide image and full location.");
+    return;
+  }
+
+  setUploading(true);
+
+  try {
+    // Prepare form data for Cloudinary upload
+    const formData = new FormData();
+    formData.append("file", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "upload.jpg",
+    });
+    formData.append("upload_preset", "road_report_preset");
+
+    // Upload image to Cloudinary
+    const cloudinaryRes = await fetch(
+      "https://api.cloudinary.com/v1_1/dpzswyrhn/image/upload",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const cloudinaryData = await cloudinaryRes.json();
+
+    if (!cloudinaryData.secure_url) {
+      throw new Error("Cloudinary upload failed");
+    }
+
+    const imageUrl = cloudinaryData.secure_url;
+    const coordsArray = [location.latitude, location.longitude];
+
+    // Call your prediction API
+    const predictRes = await fetch("http://192.168.11.157:8000/api/predict", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ imageUrl, location: coordsArray }),
+    });
+
+    // If server returns HTTP error (like 500 or 400)
+    if (!predictRes.ok) {
+      const errorText = await predictRes.text();
+      console.error(
+        "Prediction API error response:",
+        predictRes.status,
+        errorText
+      );
+      throw new Error(`Prediction API error: ${predictRes.status} ${errorText}`);
+    }
+
+    // Parse JSON response
+    const predictData = await predictRes.json();
+    console.log("Prediction API response:", predictData);
+
+    // Check if response contains an error key - means invalid image
+    if (predictData.error) {
+      Alert.alert(
+        "Invalid Image",
+        predictData.error,
+        [
+          {
+            text: "OK",
+            onPress: () => clearForm(),
+          },
+        ],
+        { cancelable: false }
+      );
+      setUploading(false);
       return;
     }
 
-    try {
-      const formData = new FormData();
-      formData.append("file", {
-        uri: imageUri,
-        type: "image/jpeg",
-        name: "upload.jpg",
-      });
-      formData.append("upload_preset", "road_report_preset");
+    // Now safely extract prediction details (valid response guaranteed here)
+    const damage = Array.isArray(predictData.typeOfDamage)
+      ? predictData.typeOfDamage.join(", ")
+      : "Unknown";
 
-      const cloudinaryRes = await fetch("https://api.cloudinary.com/v1_1/dpzswyrhn/image/upload", {
-        method: "POST",
-        body: formData,
-      });
+    const severity = predictData.severity || "Unknown";
 
-      const cloudinaryData = await cloudinaryRes.json();
-      if (!cloudinaryData.secure_url) {
-        throw new Error("Cloudinary upload failed");
-      }
+    const objects = Array.isArray(predictData.objectsDetected)
+      ? predictData.objectsDetected.join(", ")
+      : "None";
 
-      const imageUrl = cloudinaryData.secure_url;
-      const coordsArray = [location.latitude, location.longitude];
+    // Prepare local report object
+    const localReport = {
+      imageUrl,
+      description,
+      state: city,
+      coordinates: coordsArray,
+      fullAddress,
+      timestamp: new Date().toISOString(),
+      damage,
+      severity,
+      objects,
+    };
 
-      // Send to backend (non-blocking)
-      fetch("http://192.168.11.157:8000/api/predict", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ imageUrl, location: coordsArray }),
-      }).catch(error => console.error("❌ Background server error:", error.message));
+    await saveReportLocally(localReport);
 
-      // Save locally
-      const localReport = {
-        imageUrl,
-        description,
-        state: city,
-        coordinates: coordsArray,
-        fullAddress,
-        timestamp: new Date().toISOString(),
-      };
-      await saveReportLocally(localReport);
-
-      navigation.navigate("UploadSuccess");
-    } catch (error) {
-      console.error("❌ Upload error:", error.message);
-      Alert.alert("Error", error.message);
-    }
-  };
+    setUploading(false);
+    navigation.navigate("UploadSuccess");
+  } catch (error) {
+    console.error("❌ Upload error:", error.message);
+    setUploading(false);
+    Alert.alert("Error", error.message);
+  }
+};
 
   return (
     <ImageBackground source={require("../assets/pic3.jpg")} style={{ flex: 1, resizeMode: 'cover' }}>
@@ -474,6 +543,7 @@ Longitude: ${lonStr}`;
             }
           }}
           style={styles.button}
+          disabled={uploading}
         >
           <Text style={styles.buttonText}>📷 Take Picture</Text>
         </TouchableOpacity>
@@ -486,6 +556,7 @@ Longitude: ${lonStr}`;
             }
           }}
           style={styles.button}
+          disabled={uploading}
         >
           <Text style={styles.buttonText}>🖼️ Select from Gallery</Text>
         </TouchableOpacity>
@@ -503,8 +574,9 @@ Longitude: ${lonStr}`;
             selectedValue={city}
             onValueChange={(val) => setCity(val)}
             style={{ width: '100%' }}
+            enabled={!uploading}
           >
-            <Picker.Item label="-- Select State --" value="" />
+            <Picker.Item label="Select a State" value="" />
             {indianStates.map((stateName) => (
               <Picker.Item key={stateName} label={stateName} value={stateName} />
             ))}
@@ -512,76 +584,93 @@ Longitude: ${lonStr}`;
         </View>
 
         <TextInput
-          placeholder="Enter description"
+          multiline
+          placeholder="Description"
           value={description}
           onChangeText={setDescription}
-          multiline
-          numberOfLines={4}
+          editable={!uploading}
           style={{
-            borderWidth: 1,
-            borderColor: '#ccc',
-            padding: 10,
-            borderRadius: 8,
-            marginBottom: 10,
             backgroundColor: '#ADD8E6',
+            borderRadius: 8,
+            height: 80,
             width: 250,
-            textAlignVertical: 'top',
+            padding: 10,
+            marginBottom: 10,
           }}
         />
 
         <TouchableOpacity
           onPress={handleGetLocation}
-          style={{
-            backgroundColor: '#FFB6C1',
-            padding: 12,
-            borderRadius: 10,
-            alignItems: 'center',
-            marginBottom: 10,
-            width: 250,
-          }}
+          style={[styles.button, { backgroundColor: '#4682B4' }]}
+          disabled={uploading}
         >
-          <Text style={{ color: 'white', fontSize: 16 }}>
-            📍 Get Live Location
-          </Text>
+          <Text style={styles.buttonText}>📍 Get Location</Text>
         </TouchableOpacity>
 
-        {fullAddress !== '' && (
-          <Text style={{ marginBottom: 10, textAlign: 'center' }}>
-            📌 Address: {"\n"}{fullAddress}
+        {locationText ? (
+          <Text selectable style={{ marginVertical: 10, textAlign: 'center' }}>
+            {locationText}
           </Text>
-        )}
+        ) : null}
+
+        {fullAddress ? (
+          <Text selectable style={{ marginBottom: 20, textAlign: 'center', whiteSpace: 'pre-line' }}>
+            {fullAddress}
+          </Text>
+        ) : null}
 
         <TouchableOpacity
           onPress={handleUpload}
+          disabled={uploading}
           style={{
-            backgroundColor: '#90EE90',
+            backgroundColor: uploading ? '#9ACD32' : '#90EE90',
             padding: 15,
             borderRadius: 10,
             alignItems: 'center',
-            marginBottom: 20,
             width: 250,
+            marginBottom: 40,
           }}
         >
-          <Text style={{ color: 'white', fontSize: 16, fontWeight: 'bold' }}>
-            ⬆️ Upload Report
+          <Text style={{ color: uploading ? '#666' : 'white', fontSize: 18 }}>
+            {uploading ? 'Uploading...' : 'Upload Report'}
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Full screen centered spinner overlay */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={uploading}
+        onRequestClose={() => { }}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <ActivityIndicator size="large" color="#fff" />
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
 
 const styles = {
   button: {
-    backgroundColor: '#D8BFD8',
+    backgroundColor: '#00AEEF',
     padding: 15,
     borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 10,
+    marginVertical: 8,
     width: 250,
+    alignItems: 'center',
   },
   buttonText: {
-    color: 'black',
-    fontSize: 16,
+    color: 'white',
+    fontSize: 18,
   },
 };
+

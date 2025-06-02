@@ -330,65 +330,74 @@ async function getRecommendedAction(typeOfDamage, severity) {
 
 // ✅ Predict and Save
 app.post("/api/predict", async (req, res) => {
-  try {
-    const { imageUrl, location } = req.body;
-    console.log("📥 Received request:", req.body);
+  const { imageUrl, location } = req.body;
 
-    if (!imageUrl || !Array.isArray(location) || location.length !== 2) {
-      return res.status(400).json({ error: "Missing or invalid imageUrl or location" });
+  console.log("📥 Received request:", { imageUrl, location });
+
+  if (!imageUrl || !Array.isArray(location) || location.length !== 2) {
+    return res.status(400).json({ error: "Missing or invalid imageUrl or location" });
+  }
+
+  const [lat, lon] = location;
+  const scriptPath = path.join(__dirname, "..", "model", "predict.py");
+  const pythonCmd = `python "${scriptPath}" "${imageUrl}"`;
+
+  exec(pythonCmd, async (err, stdout, stderr) => {
+    if (err) {
+      console.error("❌ Prediction Error:", err.message);
+      return res.status(500).json({ error: "Prediction failed", details: stderr });
     }
 
-    const [lat, lon] = location;
-    const scriptPath = path.join(__dirname, "../model/predict.py");
-    const pythonCmd = `python "${scriptPath}" "${imageUrl}"`;
+    try {
+      const prediction = JSON.parse(stdout.trim());
+      console.log("🧠 Model prediction:", prediction);
 
-    exec(pythonCmd, async (err, stdout, stderr) => {
-      if (err) {
-        console.error("❌ Prediction Error:", err.message);
-        return res.status(500).json({ error: "Prediction failed", details: stderr });
+      if (prediction.isRoad === false) {
+        return res.status(200).json({ error: prediction.message || "Image is not a road" });
       }
 
-      try {
-        const prediction = JSON.parse(stdout.trim());
-        console.log("🧠 Model prediction:", prediction);
+      const { typeOfDamage, severity, image: base64_image } = prediction;
 
-        const { typeOfDamage, severity, image: base64_image } = prediction;
+      const recommendedAction = await getRecommendedAction(
+        typeOfDamage.join(", "),
+        severity
+      );
 
-        const recommendedAction = await getRecommendedAction(
-          typeOfDamage.join(", "),
-          severity
-        );
+      const newReport = new Report({
+        reportId: `REP-${Date.now()}`,
+        dateTime: new Date(),
+        location,
+        typeOfDamage,
+        severity,
+        imageUrl,
+        image: base64_image || null,
+        recommendedAction,
+      });
 
-        const newReport = new Report({
-          reportId: `REP-${Date.now()}`,
-          dateTime: new Date(),
-          location,
-          typeOfDamage,
-          severity,
-          imageUrl,
-          image: base64_image || null,
-          recommendedAction,
-        });
+      await newReport.save();
 
-        await newReport.save();
+      const city = await getCityFromCoordinates(lat, lon);
 
-        const city = await getCityFromCoordinates(lat, lon);
-
-        if (severity === "Severe") {
-          await notifyUsers(city, newReport);
-        }
-
-        res.json({ message: "Prediction saved", report: newReport });
-      } catch (parseError) {
-        console.error("❌ JSON Parse Error:", parseError.message);
-        res.status(500).json({ error: "Failed to parse model output" });
+      if (severity === "Severe") {
+        await notifyUsers(city, newReport);
       }
-    });
-  } catch (error) {
-    console.error("❌ Server Error:", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
+
+      // Send prediction details only — NO 'message' field
+      res.json({
+        typeOfDamage: newReport.typeOfDamage,
+        severity: newReport.severity,
+        objectsDetected: prediction.objectsDetected || [],
+        image: newReport.image,
+        recommendedAction: newReport.recommendedAction,
+      });
+
+    } catch (parseError) {
+      console.error("❌ JSON Parse Error:", parseError.message);
+      res.status(500).json({ error: "Failed to parse model output" });
+    }
+  });
 });
+
 
 // ✅ Get all reports
 app.get("/api/reports", async (req, res) => {

@@ -246,7 +246,7 @@
 import pathlib
 import torch
 import torch.nn as nn
-from torchvision import transforms
+from torchvision import transforms, models
 from PIL import Image, ImageDraw, ImageFont
 import sys
 import json
@@ -259,26 +259,26 @@ import base64
 import os
 import pymongo
 from dotenv import load_dotenv
+
 # Handle path compatibility on Windows
 if sys.platform == 'win32':
     pathlib.PosixPath = pathlib.WindowsPath
 
-# Suppress warnings
 warnings.filterwarnings("ignore")
 logging.getLogger("transformers").setLevel(logging.ERROR)
 
 # Labels
 damage_labels = ['Alligator Crack', 'Longitudinal Crack', 'No Damage', 'Pothole', 'Transverse Crack']
 severity_labels = ['Low', 'Moderate', 'Severe', 'nan']
+road_labels = ['Not Road', 'Road']
 
-import os
-
+# MongoDB
 MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://alluramyareddy99:Ramya3634@cluster0.kg9sb.mongodb.net/safestreet?retryWrites=true&w=majority&appName=Cluster0")
 client = pymongo.MongoClient(MONGO_URI)
 db = client["SafeStreetDB"]
 collection = db["predictions"]
 
-# Define multi-output classification model
+# ViT Model
 class MultiOutputModel(nn.Module):
     def __init__(self, base_model, num_damage_classes, num_severity_classes):
         super().__init__()
@@ -289,32 +289,44 @@ class MultiOutputModel(nn.Module):
 
     def forward(self, x):
         outputs = self.base_model(x).last_hidden_state[:, 0, :]
-        damage_output = self.fc_damage(outputs)
-        severity_output = self.fc_severity(outputs)
-        return damage_output, severity_output
+        return self.fc_damage(outputs), self.fc_severity(outputs)
 
-# Load device and models
+# Load models
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Load ResNet18 - Road classifier
+road_model = models.resnet18(pretrained=False)
+road_model.fc = nn.Linear(road_model.fc.in_features, 2)
+road_model.load_state_dict(torch.load("C:/Users/Lenovo/OneDrive/Attachments/Desktop/SafeStreet/model/resnet_road_model1.pth", map_location=device))
+road_model.to(device).eval()
+
+# Load ViT classifier
 checkpoint_path = "C:/Users/Lenovo/OneDrive/Attachments/Desktop/SafeStreet/model/model_epoch_16.pth"
 base_vit = ViTModel.from_pretrained("google/vit-base-patch16-224")
 classification_model = MultiOutputModel(base_vit, len(damage_labels), len(severity_labels))
 classification_model.load_state_dict(torch.load(checkpoint_path, map_location=device))
 classification_model.to(device).eval()
 
-# Load YOLOv5 model
-yolo_model = torch.hub.load(r'C:/Users/Lenovo/OneDrive/Attachments/Desktop/SafeStreet/model/yolov5', 'custom', path='C:/Users/Lenovo/OneDrive/Attachments/Desktop/SafeStreet/model/best.pt', source='local')
+# Load YOLOv5
+yolo_model = torch.hub.load(
+    r'C:/Users/Lenovo/OneDrive/Attachments/Desktop/SafeStreet/model/yolov5',
+    'custom',
+    path=r'C:/Users/Lenovo/OneDrive/Attachments/Desktop/SafeStreet/model/best.pt',
+    source='local'
+)
 yolo_model.to(device).eval()
 
-# Image transform
-transform = transforms.Compose([
+# Transforms
+transform_common = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
-    transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+    transforms.Normalize([0.485, 0.456, 0.406],
+                         [0.229, 0.224, 0.225])
 ])
 
-# Prediction function
+# Main prediction function
 def predict_damage_and_objects(image_input):
-    # Load image from path, URL, or base64
+    # Load image
     if image_input.startswith("http"):
         response = requests.get(image_input, headers={'User-Agent': 'Mozilla/5.0'}, stream=True)
         image = Image.open(BytesIO(response.content)).convert("RGB")
@@ -324,11 +336,22 @@ def predict_damage_and_objects(image_input):
     else:
         image = Image.open(image_input).convert("RGB")
 
-    # Keep copy for drawing
     draw_image = image.copy()
-    image_tensor = transform(image).unsqueeze(0).to(device)
 
-    # Classification
+    image_tensor = transform_common(image).unsqueeze(0).to(device)
+
+    # Step 1: Road classification
+    with torch.no_grad():
+        road_logits = road_model(image_tensor)
+        road_pred = torch.argmax(road_logits, dim=1).item()
+
+    if road_pred == 0:  # Not road
+        return {
+            "isRoad": False,
+            "message": "The given image is not of a road. Damage classification and object detection skipped."
+        }
+
+    # Step 2: Classification
     with torch.no_grad():
         damage_logits, severity_logits = classification_model(image_tensor)
 
@@ -338,11 +361,10 @@ def predict_damage_and_objects(image_input):
     severity_probs = torch.softmax(severity_logits, dim=1).squeeze().cpu().numpy()
     predicted_severity = severity_labels[severity_probs.argmax()]
 
-    # YOLOv5 detection
+    # Step 3: YOLOv5 detection
     results = yolo_model(draw_image)
     detections = results.pandas().xyxy[0]
 
-    # Draw detection boxes
     draw = ImageDraw.Draw(draw_image)
     font = ImageFont.load_default()
 
@@ -352,13 +374,12 @@ def predict_damage_and_objects(image_input):
         draw.rectangle(xy, outline='red', width=2)
         draw.text((xy[0], xy[1] - 10), label, fill='red', font=font)
 
-    # Convert image to base64 string (no file saving)
     buffer = BytesIO()
     draw_image.save(buffer, format="JPEG")
     base64_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-    # Create result dictionary
     result_data = {
+        "isRoad": True,
         "typeOfDamage": predicted_damages,
         "severity": predicted_severity,
         "recommendedAction": "Urgent Repair" if predicted_severity == "Severe" else "Scheduled Repair",
@@ -374,14 +395,13 @@ def predict_damage_and_objects(image_input):
 
     return result_data
 
-# CLI entry point
+# CLI
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Image path, URL, or base64 string not provided"}))
         sys.exit(1)
 
     image_input = sys.argv[1]
-
     try:
         prediction = predict_damage_and_objects(image_input)
         print(json.dumps(prediction, indent=2, default=str))
