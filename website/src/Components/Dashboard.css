@@ -1,247 +1,193 @@
-/* ===========================
-   General Dashboard Styling
-   =========================== */
-   .dashboard-container {
-    width: 98%;
-    margin: auto;
-    text-align: center;
-    padding: 20px;
-    font-family: "Poppins", sans-serif;
-    background: #f0f4f8;
-  }
-  
-  /* Title */
-  .dashboard-title {
-    font-size: 32px;
-    font-weight: bold;
-    color: #004080;
-    margin-bottom: 20px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  
-  /* ===========================
-     Navbar Styling
-     =========================== */
-  .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(90deg, #003366, #004080);
-    padding: 15px 20px;
-    border-radius: 8px;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-  }
-  
-  .logo {
-    color: white;
-    font-size: 24px;
-    font-weight: bold;
-  }
-  
-  .nav-links a {
-    color: white;
-    text-decoration: none;
-    margin-left: 20px;
-    font-size: 16px;
-    transition: color 0.3s;
-  }
-  
-  .nav-links a:hover {
-    color: #ffd700;
-  }
-  
-  /* ===========================
-     Sorting Dropdown
-     =========================== */
-  .sort-options {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 15px;
-  }
-  
-  .sort-options label {
-    font-size: 16px;
-    font-weight: bold;
-    color: #004080;
-    margin-right: 10px;
-  }
-  
-  .sort-options select {
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 2px solid #004080;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-  
-  .sort-options select:hover {
-    background: #004080;
-    color: white;
-    border-color: #ffd700;
-  }
-  
-  /* ===========================
-     Reports Grid
-     =========================== */
-  .reports-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    align-items: center;
-    width: 100%;
-  }
-  
-  /* ===========================
-     Report Card
-     =========================== */
-  .report-card {
-    width: 98%;
-    max-width: 1450px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-    padding: 10px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 40px;
-    cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
-    border: 2px solid #d9e2ec;
-    text-align: left;
-    min-height: 130px;
-    overflow: hidden;
-  }
-  
-  .report-card:hover {
-    transform: scale(1.02);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    background-color: #eaf1f8;
-  }
-  
-  /* ===========================
-     Report Image Container
-     =========================== */
-  .report-image-container {
-    width: 140px;
-    height: 140px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: none;
-    padding: 0;
-    border: none;
-    overflow: hidden;
-  }
-  
-  .report-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-  
-  /* ===========================
-     Report Details
-     =========================== */
-  .report-info {
-    flex-grow: 1;
-    text-align: left;
-    width: 100%;
-  }
-  
-  .report-severity {
-    font-size: 18px;
-    font-weight: bold;
-    text-transform: uppercase;
-    padding: 8px 12px;
-    border-radius: 6px;
-    display: inline-block;
-    text-align: center;
-  }
-  
-  /* Severity Colors */
-  .high {
-    background: #dc3545;
-    color: white;
-  }
-  
-  .moderate {
-    background: #ffc107;
-    color: #212529;
-  }
-  
-  .low {
-    background: #28a745;
-    color: white;
-  }
-  
-  /* ===========================
-     Report Date Box
-     =========================== */
-  .report-date {
-    background: #004080;
-    color: white;
-    padding: 15px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    min-width: 200px;
-    text-align: center;
-  }
-  
-  /* ===========================
-     Responsive Fixes
-     =========================== */
-  @media (max-width: 768px) {
-    .report-card {
-      flex-direction: column;
-      width: 100%;
-      padding: 15px;
-    }
-  
-    .report-image-container {
-      width: 100%;
-    }
-  
-    .report-image {
-      width: 100%;
-      height: auto;
-    }
-  }
-  
-  /* ===========================
-     Loading & Error Messages
-     =========================== */
-  .loading-text,
-  .error-text,
-  .no-reports-text {
-    text-align: center;
-    font-size: 1.2rem;
-    color: #666;
-  }
-  
-  /* ===========================
-     Border Color Classes for Severity
-     =========================== */
-  .border-blue {
-    border: 2px solid #004080;
-  }
-  
-  .border-red {
-    border: 2px solid #dc3545;
-  }
-  
-  .border-yellow {
-    border: 2px solid #ffc107;
-  }
-  
-  .border-green {
-    border: 2px solid #28a745;
-  }
-  
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background-color: #f6f8fa;
+  color: #1f2937;
+}
+
+/* === Container === */
+.dashboard-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #004d99;
+  padding: 15px 20px;
+  color: white;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  margin: 0 15px;
+  font-weight: bold;
+}
+
+.nav-links a:hover {
+  text-decoration: underline;
+}
+
+/* === Title === */
+.dashboard-title {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* === Cards === */
+.analysis-cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+
+.card {
+  flex: 1;
+  min-width: 200px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card.total {
+  border-left: 6px solid #2563eb;
+}
+
+.card.resolved {
+  border-left: 6px solid #10b981;
+}
+
+.card.pending {
+  border-left: 6px solid #f59e0b;
+}
+
+/* === Sort Dropdown === */
+.sort-options {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sort-options select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* === Loading & Error === */
+.loading-text,
+.error-text {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #6b7280;
+}
+
+.error-text {
+  color: #dc2626;
+}
+
+/* === Table === */
+.table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.reports-table thead {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.reports-table th,
+.reports-table td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 15px;
+}
+
+.thumbnail {
+  width: 75px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+/* === Severity Badges === */
+.severity {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 13px;
+  text-align: center;
+  display: inline-block;
+}
+
+.severity.high {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.severity.moderate {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.severity.low {
+  background-color: #d1fae5;
+  color: #047857;
+}
+
+/* === View Button === */
+button {
+  padding: 8px 14px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background-color: #1d4ed8;
+}
+
+.no-reports-text {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
+  font-size: 16px;
+}
