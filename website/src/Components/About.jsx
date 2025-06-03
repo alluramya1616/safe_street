@@ -6,17 +6,17 @@ const About = () => {
   return (
     <div className="about-container">
       <nav className="navbar">
-              <div className="logo">SafeStreet</div>
-              <div className="nav-links">
-                <Link to="/home">Home</Link>
-                <Link to="/dashboard">Dashboard</Link>
-                <Link to="/about">About Us</Link>
-                <Link to="/" onClick={() => localStorage.removeItem("token")}>
-                  Log Out
-                </Link>
-              </div>
-            </nav>
-
+        <div className="logo">SafeStreet</div>
+        <div className="nav-links">
+          <Link to="/home">Home</Link>
+          <Link to="/dashboard">Dashboard</Link>
+          <Link to="/reports">Reports</Link>
+          <Link to="/about">About</Link>
+          <Link to="/" onClick={() => localStorage.removeItem("token")}>
+            Log Out
+          </Link>
+        </div>
+      </nav>
       <div className="about-content">
         <h1>About SafeStreet</h1>
         <p className="mission">

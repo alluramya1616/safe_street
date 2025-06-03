@@ -1,0 +1,147 @@
+.reports-container {
+  padding: 2rem;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.reports-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #004d99;
+  padding: 15px 20px;
+  color: white;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  margin: 0 15px;
+  font-weight: bold;
+}
+
+.nav-links a:hover {
+  text-decoration: underline;
+}
+
+.sort-options {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.sort-options select {
+  padding: 0.4rem 0.6rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.refresh-button {
+  background-color: #2980b9;
+  color: white;
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.refresh-button:disabled {
+  background-color: #7f8c8d;
+  cursor: not-allowed;
+}
+
+.section-title {
+  font-size: 1.4rem;
+  color: #0b6bcb;
+  margin: 2rem 0 0.8rem;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 2rem;
+}
+
+.reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border: 1px solid #ddd;
+}
+
+.reports-table th,
+.reports-table td {
+  padding: 0.75rem;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+
+.reports-table th {
+  background-color: #ecf0f1;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.thumbnail {
+  .thumbnail {
+  width: 60px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+}
+
+button {
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #1e8449;
+}
+
+.severity {
+  font-weight: 600;
+}
+
+.severity.low {
+  color: green;
+}
+
+.severity.moderate {
+  color: orange;
+}
+
+.severity.high {
+  color: red;
+}
+
+.no-reports-text {
+  text-align: center;
+  padding: 1rem;
+  color: #999;
+  font-style: italic;
+}
+
+.error-text {
+  color: red;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}

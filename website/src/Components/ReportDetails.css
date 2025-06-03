@@ -1,243 +1,213 @@
 .report-details-page {
-  position: relative; /* needed for ::before circuit lines */
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-  background-color: #f9f9f9; /* soft light background */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  font-family: "Poppins", sans-serif;
-  overflow-x: hidden;
-}
-
-/* AI Circuit Lines Background Animation */
-.report-details-page::before {
-  content: "";
-  position: absolute;
-  top: 10%;
-  left: 5%;
-  width: 90%;
-  height: 80%;
-  background: repeating-linear-gradient(
-    45deg,
-    #28a745 0,
-    #28a745 2px,
-    transparent 2px,
-    transparent 10px
-  );
-  opacity: 0.1;
-  pointer-events: none;
-  animation: slideLines 15s linear infinite;
-  z-index: 0;
-}
-
-@keyframes slideLines {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 100px 100px;
-  }
+  padding: 2rem;
+  font-family: "Segoe UI", sans-serif;
+  color: #1f2937;
 }
 
 .report-details-container {
-  position: relative; /* to be above the background lines */
-  z-index: 1;
-  width: 60%;
   max-width: 900px;
-  margin: 40px 0;
-  padding: 25px;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  color: rgb(3, 3, 3);
-
-  /* Pulsing green glow animation */
-  animation: pulseGlow 3s infinite ease-in-out;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-@keyframes pulseGlow {
-  0% {
-    box-shadow: 0 0 8px rgba(40, 167, 69, 0.6);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(40, 167, 69, 1);
-  }
-  100% {
-    box-shadow: 0 0 8px rgba(40, 167, 69, 0.6);
-  }
+.section {
+  margin-bottom: 2rem;
 }
 
 .images-container {
-  margin-bottom: 20px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.image-wrapper {
+  flex: 1;
+  min-width: 180px;
+  text-align: center;
 }
 
 .report-image {
-  width: 300px;
-  height: 200px;
+  width: 100%;
+  height: 180px;
   object-fit: cover;
-  border-radius: 10px;
-  border: 4px solid #ddd;
-  transition: transform 0.3s ease-in-out;
-  background: #f2f2f2;
-  padding: 10px;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  border: 2.5px solid #d1d5db;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: zoom-in;
+  background-color: #f9fafb;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  margin: 4px 4px 0 0;
+}
+
+/* Severity colors */
+.severity-low {
+  background: #60a5fa;
+  color: white;
+}
+
+.severity-medium {
+  background: #fbbf24;
+  color: black;
+}
+
+.severity-high {
+  background: #ef4444;
+  color: white;
+}
+
+/* Damage badge */
+.damage-badge {
+  background: #facc15;
+  color: #1f2937;
+}
+
+/* Status colors */
+.status-resolved {
+  background: #10b981;
+  color: white;
+  
+}
+
+.status-pending {
+  background: #f43f5e;
+  color: white;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
   cursor: pointer;
 }
 
-.report-image:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px #28a745;
-}
-
-.error-text,
-.loading-text {
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
-  color: red;
-  padding: 15px;
+.modal-image {
+  max-width: 100%;
+  max-height: 80vh;
   border-radius: 8px;
-  background: #ffebee;
-  border: 2px solid red;
 }
 
-/* Loading dots animation */
-.loading-text .dot {
-  animation: blink 1.4s infinite;
-  opacity: 0.3;
-  font-weight: bold;
-  color: #28a745;
-  margin-left: 2px;
+/* Buttons & Links */
+button {
+  padding: 10px 16px;
+  border: none;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
-.loading-text .dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.loading-text .dot:nth-child(3) {
-  animation-delay: 0.4s;
+button:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
 }
 
-@keyframes blink {
-  0%,
-  80%,
-  100% {
-    opacity: 0.3;
-  }
-  40% {
-    opacity: 1;
-  }
+.success-text {
+  color: #10b981;
+  margin-top: 10px;
+}
+
+.error-text {
+  color: red;
 }
 
 .location-link {
-  color: #007bff;
-  cursor: pointer;
+  color: #2563eb;
   text-decoration: underline;
-  transition: color 0.3s ease;
 }
-
-.location-link:hover {
-  color: #0056b3;
-}
-
-/* Status badge styles */
-.status-badge {
+.section-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b; /* dark slate blue */
+  background-color: #e0e7ff; /* soft light blue background */
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.15);
   display: inline-block;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 14px;
-  color: white;
-  background-color: #28a745; /* Green for resolved */
+  width: 90%;
+  height:18px;
+  letter-spacing: 0.05em;
   user-select: none;
-}
-
-.status-badge.pending {
-  background-color: #ffc107; /* Yellow for pending */
-}
-
-.status-badge.resolved {
-  background-color: #28a745; /* Green */
-}
-
-/* Button styles and hover glow */
-.status-update-section button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 25px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: box-shadow 0.3s ease, background-color 0.3s ease, transform 0.2s ease;
-  user-select: none;
-}
-
-.status-update-section button:disabled {
-  background-color: #94d3a2;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.status-update-section button:hover:not(:disabled) {
-  box-shadow: 0 0 12px 2px #28a745, 0 0 20px 6px #28a745;
-  background-color: #218838;
-  transform: scale(1.05);
-}
-
-/* Success message */
-.success-text {
-  margin-top: 12px;
-  color: #28a745;
-  font-weight: 600;
-  animation: fadeIn 0.8s ease forwards;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Typewriter effect for Recommended Action */
-@keyframes typewriter {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
-  }
-}
-
-.recommended-action {
-  display: inline-block;
-  white-space: nowrap;
+  position: relative;
   overflow: hidden;
-  border-right: 3px solid #28a745;
-  width: fit-content;
-  animation: typewriter 3s steps(40) forwards;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .report-details-container {
-    width: 90%;
-    padding: 20px;
-  }
+/* Add a subtle underline bar at the bottom */
+.section-title::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: #2563eb; /* blue underline */
+  border-radius: 2px;
+  margin: 0.6rem auto 0 auto;
+  transition: width 0.3s ease;
+}
 
-  .report-image {
-    width: 100%;
-    height: auto;
-  }
+/* On hover, make underline longer and change text color */
+.section-title:hover {
+  color: #1e40af;
+  background-color: #dbeafe;
+}
+
+.section-title:hover::after {
+  width: 100px;
+}
+
+/* Optional: if you want an icon on the left aligned with text */
+.section-title .icon {
+  vertical-align: middle;
+  margin-right: 0.75rem;
+  font-size: 1.6rem;
+  color: #2563eb;
+}
+.status-update-section {
+  text-align: center;
+}
+
+.status-update-section button {
+  display: inline-block;
+  margin-top: 1rem;
+  min-width: 160px; /* optional to keep button width consistent */
+  padding: 10px 20px;
+  font-size: 1rem;
 }

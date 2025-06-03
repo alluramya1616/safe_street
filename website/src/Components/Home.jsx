@@ -154,13 +154,13 @@ const HomePage = () => {
   return (
     <div className="home-container">
       {/* Navbar */}
-      <nav className="navbar">
+     <nav className="navbar">
         <div className="logo">SafeStreet</div>
         <div className="nav-links">
           <Link to="/home">Home</Link>
           <Link to="/dashboard">Dashboard</Link>
-          <Link to="/about">About Us</Link>
-          <Link to="/help">Help</Link>
+          <Link to="/reports">Reports</Link>
+          <Link to="/about">About</Link>
           <Link to="/" onClick={() => localStorage.removeItem("token")}>
             Log Out
           </Link>
@@ -192,7 +192,16 @@ const HomePage = () => {
         </ul>
       </section>
       <div className="email-banner">
-        <p>Contact us: <a href="safestreet.help@gmail.com">support@safestreet.com</a></p>
+        <li>
+            <strong>Email:</strong>{" "}
+            <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=safestreet.help@gmail.com"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                safestreet.help@gmail.com
+            </a>
+            </li>
       </div>
     </div>
 

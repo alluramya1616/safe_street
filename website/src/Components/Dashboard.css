@@ -145,27 +145,27 @@ body {
 }
 
 /* === Severity Badges === */
-.severity {
-  padding: 6px 10px;
-  border-radius: 8px;
+ .severity {
+  /* padding: 6px 10px;
+  border-radius: 8px; */
   font-weight: bold;
   font-size: 13px;
   text-align: center;
-  display: inline-block;
-}
+  /* display: inline-block;  */
+} 
 
 .severity.high {
   background-color: #fee2e2;
-  color: #b91c1c;
+  color: #b91c1c; 
 }
 
 .severity.moderate {
-  background-color: #fef3c7;
+  /* background-color: #fef3c7; */
   color: #b45309;
 }
 
 .severity.low {
-  background-color: #d1fae5;
+  /* background-color: #d1fae5; */
   color: #047857;
 }
 

@@ -229,9 +229,11 @@ const reportSchema = new mongoose.Schema(
     imageUrl: { type: String, required: true },
     image: { type: String }, // base64
     recommendedAction: { type: String },
+    status: { type: String, default: "Pending" }, // <-- NEW
   },
   { collection: "reports" }
 );
+
 
 const Report = mongoose.model("Report", reportSchema);
 
@@ -413,20 +415,36 @@ app.get("/api/reports/:id", async (req, res) => {
   try {
     const report = await Report.findById(req.params.id);
     if (!report) return res.status(404).json({ message: "Report not found" });
-    
-    // Ensure that imageUrl is included in the response
+
+    // Include the status field here
     res.json({
       reportId: report.reportId,
       dateTime: report.dateTime,
       location: report.location,
       typeOfDamage: report.typeOfDamage,
       severity: report.severity,
-      imageUrl: report.imageUrl, // The image URL from the database
-      image: report.image, // If you're storing base64 image data as well
-      recommendedAction: report.recommendedAction
+      imageUrl: report.imageUrl,
+      image: report.image,
+      recommendedAction: report.recommendedAction,
+      status: report.status,  // <-- ADD THIS LINE
     });
   } catch {
     res.status(500).json({ message: "Failed to fetch report" });
+  }
+});
+
+app.patch("/api/reports/:id/status", async (req, res) => {
+  const { status } = req.body;
+  try {
+    const report = await Report.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!report) return res.status(404).json({ message: "Report not found" });
+    res.json(report);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update status" });
   }
 });
 
