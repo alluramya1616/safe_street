@@ -38,22 +38,22 @@ const LoginScreen = ({ navigation, setIsLoggedIn, setUserInfo }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Logo */}
+      
       <View style={styles.logoContainer}>
         <Image style={styles.logo} source={require("../assets/logo.png")} />
       </View>
 
-      {/* SAFE STREET text */}
+      
       <View style={styles.safeStreetContainer}>
         <Text style={styles.safeStreetText}>SAFE STREET</Text>
       </View>
 
-      {/* Login title */}
+     
       <View style={styles.loginContainer}>
         <Text style={styles.loginText}>Login</Text>
       </View>
 
-      {/* Inputs */}
+     
       <View style={styles.inputContainer}>
         <TextInput
           placeholder="Name"
@@ -92,12 +92,12 @@ const LoginScreen = ({ navigation, setIsLoggedIn, setUserInfo }) => {
         />
       </View>
 
-      {/* Login Button */}
+     
       <TouchableOpacity style={styles.loginButton} onPress={login}>
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
-      {/* Register Link */}
+      
       <TouchableOpacity
         style={styles.loginLink}
         onPress={() => navigation.navigate("Register")}
