@@ -46,11 +46,24 @@ const Dashboard = () => {
   const resolved = reports.filter((r) => r.status === "Resolved").length;
   const pending = totalReports - resolved;
 
-  const severityCount = { Severe: 0, Medium: 0, Low: 0, Unknown: 0 };
+  // Normalize severities: map "Moderate" and similar to "Medium"
+  const severityMapping = {
+    severe: "Severe",
+    moderate: "Medium",
+    medium: "Medium",
+    low: "Low",
+  };
+
+  const severityCount = {
+    Severe: 0,
+    Medium: 0,
+    Low: 0,
+  };
 
   reports.forEach((r) => {
-    const severity = r.severity || "Unknown";
-    severityCount[severity] = (severityCount[severity] || 0) + 1;
+    const rawSeverity = r.severity?.toLowerCase() || "unknown";
+    const normalized = severityMapping[rawSeverity] || "Unknown";
+    severityCount[normalized] = (severityCount[normalized] || 0) + 1;
   });
 
   const pieData = Object.keys(severityCount).map((key) => ({
@@ -62,7 +75,6 @@ const Dashboard = () => {
     { severity: "Severe", count: severityCount["Severe"] },
     { severity: "Medium", count: severityCount["Medium"] },
     { severity: "Low", count: severityCount["Low"] },
-    { severity: "Unknown", count: severityCount["Unknown"] },
   ];
 
   const COLORS = ["#FF4C4C", "#FFA500", "#00BFFF", "#AAAAAA"];
