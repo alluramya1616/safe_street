@@ -11,10 +11,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ArchiveScreen() {
   const [reports, setReports] = useState([]);
+
   useEffect(() => {
     const fetchReports = async () => {
       try {
-        // Use the same key 'reports' as in ReportScreen
         const storedReports = await AsyncStorage.getItem('reports');
         if (storedReports !== null) {
           setReports(JSON.parse(storedReports));
@@ -29,14 +29,13 @@ export default function ArchiveScreen() {
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Image source={{ uri: item.imageUrl }} style={styles.image} />
-      <Text style={styles.text}><Text style={styles.label}>State:</Text> {item.state}</Text>
-      <Text style={styles.text}><Text style={styles.label}>Description:</Text> {item.description}</Text>
-      <Text style={styles.text}><Text style={styles.label}>Address:</Text> {item.fullAddress}</Text>
-      <Text style={styles.text}>
-        <Text style={styles.label}>Coordinates:</Text> {item.coordinates?.[0]}, {item.coordinates?.[1]}
-      </Text>
-      <Text style={styles.text}><Text style={styles.label}>Reported At:</Text> {new Date(item.timestamp).toLocaleString()}</Text>
+      <View style={styles.row}>
+        <Image source={{ uri: item.imageUrl }} style={styles.image} />
+        <View style={styles.textContainer}>
+          <Text style={styles.text}><Text style={styles.label}>Reported At:</Text> {new Date(item.timestamp).toLocaleString()}</Text>
+          <Text style={styles.text}><Text style={styles.label}>Address:</Text> {item.fullAddress}</Text>
+        </View>
+      </View>
     </View>
   );
 
@@ -66,7 +65,7 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 16,
-    marginTop:50,
+    marginTop: 50,
     textAlign: 'center',
   },
   noData: {
@@ -81,14 +80,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 2,
   },
+  row: {
+    flexDirection: 'row',
+  },
   image: {
-    width: '100%',
-    height: 200,
+    width: 120,
+    height: 120,
     borderRadius: 8,
-    marginBottom: 10,
+    marginRight: 10,
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: 'space-around',
   },
   text: {
     marginBottom: 4,
+    flexWrap: 'wrap',
   },
   label: {
     fontWeight: 'bold',

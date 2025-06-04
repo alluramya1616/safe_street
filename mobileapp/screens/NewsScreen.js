@@ -10,23 +10,41 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-const NEWS_API_KEY = 'a3e998d42ff3463fa3657f53f40f2914'; // Replace with your NewsAPI key
+const NEWS_API_KEY = '7ffdc46f9b23400089d54237c4d782ad'; // Replace with your key
 
 const NewsScreen = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchNews();
+    fetchRecentNews();
   }, []);
 
-  const fetchNews = async () => {
+  const fetchRecentNews = async () => {
     try {
-      const response = await fetch(
-        `https://newsapi.org/v2/everything?q=road+damage+accident+OR+pothole+accident+india&language=en&sortBy=publishedAt&apiKey=${NEWS_API_KEY}`
+      const query = encodeURIComponent(
+        '(pothole accident OR road damage OR damaged road OR bad road condition OR road infrastructure)'
       );
+
+      const response = await fetch(
+        `https://newsapi.org/v2/everything?q=${query}&language=en&sortBy=publishedAt&pageSize=50&apiKey=${NEWS_API_KEY}`
+      );
+
       const data = await response.json();
-      setArticles(data.articles || []);
+
+      const filteredArticles = (data.articles || []).filter((article) => {
+        const content = `${article.title} ${article.description}`.toLowerCase();
+        return (
+          content.includes('pothole') ||
+          content.includes('road damage') ||
+          content.includes('damaged road') ||
+          content.includes('accident') ||
+          content.includes('bad road') ||
+          content.includes('infrastructure')
+        );
+      });
+
+      setArticles(filteredArticles);
     } catch (error) {
       console.error('Error fetching news:', error);
     } finally {
@@ -37,7 +55,6 @@ const NewsScreen = () => {
   const openArticleUrl = (url) => {
     Linking.openURL(url);
   };
-
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -55,7 +72,6 @@ const NewsScreen = () => {
       onPress={() => openArticleUrl(item.url)}
       style={styles.articleContainer}
     >
-      {/* shows news thumbnails */}
       <Image
         style={styles.image}
         source={{
@@ -75,7 +91,7 @@ const NewsScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.headerTitle}>
-        Road Damage & Pothole Accident News (India)
+        Recent Road Damage & Pothole Accident News (India)
       </Text>
       {loading ? (
         <ActivityIndicator size="large" color="#16247d" />
@@ -102,7 +118,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#16247d',
-    marginTop:10,
+    marginTop: 10,
     marginBottom: 20,
     textAlign: 'center',
   },

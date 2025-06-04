@@ -1,11 +1,11 @@
 // const express = require("express");
-// const mongoose = require("mongoose");
-// const dotenv = require("dotenv");
-// const cors = require("cors");
-// const { exec } = require("child_process");
-// const path = require("path");
-// const axios = require("axios");
-// const nodemailer = require("nodemailer");
+// const mongoose = require("mongoose");//object data Modeling library to define schemas and intract with the database
+// const dotenv = require("dotenv");//loads environment variables from .env file into process.env
+// const cors = require("cors");//communication between frontend and backend
+// const { exec } = require("child_process");//used to invoke python scripts
+// const path = require("path");//utility for resolving file paths
+// const axios = require("axios");//interact with external services and internal auth server
+// const nodemailer = require("nodemailer");//sending email via SMTP
 
 // dotenv.config();
 
@@ -13,74 +13,101 @@
 // app.use(express.json());
 // app.use(cors({ origin: "*" }));
 
-// // ✅ MongoDB connection
+// // ✅ MongoDB Connection
 // mongoose
 //   .connect(process.env.MONGO_URI, {
 //     useNewUrlParser: true,
 //     useUnifiedTopology: true,
 //   })
-//   .then(() => console.log("✅ MongoDB Connected"))
-//   .catch((err) => console.log("❌ DB Connection Error:", err));
+//   .then(() => console.log("✅ MongaoDB Connected"))
+//   .catch((err) => console.error("❌ DB Connection Error:", err));
 
-// // ✅ Define Schema for reports
+// // ✅ Report Schema
 // const reportSchema = new mongoose.Schema(
 //   {
 //     reportId: { type: String, unique: true },
-//     dateTime: { type: Date, required: true, default: Date.now },
+//     dateTime: { type: Date, default: Date.now },
 //     location: { type: Array, required: true },
-//     typeOfDamage: { type: Array, default: null },
-//     severity: { type: String, default: null },
+//     typeOfDamage: { type: Array },
+//     severity: { type: String },
 //     imageUrl: { type: String, required: true },
-//     image: { type: String, default: null }, // base64
-//     recommendedAction: { type: String, default: null },
+//     image: { type: String }, // base64
+//     recommendedAction: { type: String },
+//     status: { type: String, default: "Pending" }, // <-- NEW
 //   },
 //   { collection: "reports" }
 // );
 
+
 // const Report = mongoose.model("Report", reportSchema);
 
-// // ✅ Reverse Geocode function to get city from coordinates
+// // ✅ Get city from coordinates using OpenCage API
 // async function getCityFromCoordinates(lat, lon) {
 //   try {
+//     if (!process.env.OPENCAGE_API_KEY) throw new Error("Missing OPENCAGE_API_KEY");
+
 //     const response = await axios.get(
 //       `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${process.env.OPENCAGE_API_KEY}`
 //     );
-//     const city =
-//       response.data.results[0]?.components.city ||
-//       response.data.results[0]?.components.town ||
-//       response.data.results[0]?.components.village ||
-//       "Unknown";
-//     return city;
+
+//     const result = response.data.results?.[0];
+//     const components = result?.components;
+
+//     return (
+//       components?.city ||
+//       components?.town ||
+//       components?.village ||
+//       components?.state_district ||
+//       "Unknown"
+//     );
 //   } catch (error) {
 //     console.error("❌ Failed to reverse geocode:", error.message);
 //     return "Unknown";
 //   }
 // }
 
-// // ✅ Function to notify users via email
+// // ✅ Send email notifications
 // async function notifyUsers(city, report) {
+//   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+//     return console.warn("⚠️ Email credentials not set, skipping notification");
+//   }
+
 //   try {
-//     const response = await axios.get(`${process.env.AUTH_SERVER_URL}/api/users-by-city/${city}`);
+//     const response = await axios.get(
+//       `${process.env.AUTH_SERVER_URL}/api/users-by-city/${city}`
+//     );
 //     const users = response.data;
 
+//     if (!users.length) {
+//       console.log(`ℹ️ No users found in ${city}`);
+//       return;
+//     }
 //     const transporter = nodemailer.createTransport({
 //       service: "gmail",
 //       auth: {
 //         user: process.env.EMAIL_USER,
 //         pass: process.env.EMAIL_PASS,
 //       },
-//     });
+//     });    
 
-//     for (let user of users) {
+//     for (const user of users) {
+//       const [lat, lon] = report.location;
+//       const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lon}`;
+    
 //       await transporter.sendMail({
-//         from: `"SafeStreet" <${process.env.EMAIL_USER}>`,
+//         from: `"SafeStreet Alerts" <${process.env.EMAIL_USER}>`,
 //         to: user.email,
-//         subject: "🚧 New Road Damage Reported in Your Area",
-//         html: `<p>Hi ${user.username},</p>
-//                <p>A new road damage has been reported in <b>${city}</b>.</p>
-//                <p><b>Type of Damage:</b> ${report.typeOfDamage.join(", ")}</p>
-//                <p><b>Severity:</b> ${report.severity}</p>
-//                <p><b>Recommended Action:</b> ${report.recommendedAction}</p>`,
+//         subject: "New Road Report in Your Area",
+//         html: `
+//           <p>Hi ${user.username},</p>
+//           <p>A new road damage has been reported in <b>${city}</b>.</p>
+//           <p><strong>Type:</strong> ${report.typeOfDamage.join(", ")}</p>
+//           <p><strong>Severity:</strong> ${report.severity}</p>
+//           <p><strong>Location:</strong> <a href="${googleMapsUrl}" target="_blank">View on Google Maps</a></p>
+//           <br />
+//           <p>For more details, visit the SafeStreet website.</p>
+//           <hr />
+//         `
 //       });
 //     }
 
@@ -90,110 +117,158 @@
 //   }
 // }
 
-// // ✅ Function to get recommended action using Gemini via Python
+// // ✅ Get recommended action from Python script
 // async function getRecommendedAction(typeOfDamage, severity) {
 //   return new Promise((resolve, reject) => {
 //     const scriptPath = path.join(__dirname, "../model/recommend_action.py");
 //     const command = `python "${scriptPath}" "${typeOfDamage}" "${severity}"`;
-//     const env = { ...process.env, GEMINI_API_KEY: process.env.GEMINI_API_KEY };
+//     const env = { ...process.env };
 
 //     exec(command, { env }, (error, stdout, stderr) => {
 //       if (error) {
 //         console.error("❌ Gemini Script Error:", error.message);
-//         return reject("Gemini script execution failed");
+//         return reject("Gemini script failed");
 //       }
-
 //       resolve(stdout.trim());
 //     });
 //   });
 // }
 
-// // ✅ Predict route (fully fixed)
+// // ✅ Predict and Save
 // app.post("/api/predict", async (req, res) => {
-//   try {
-//     const { imageUrl, location } = req.body;
-//     console.log("📥 Received request:", req.body);
+//   const { imageUrl, location } = req.body;
 
-//     if (!imageUrl || !location || location.length !== 2) {
-//       return res.status(400).json({ error: "Missing or invalid imageUrl or location" });
+//   console.log("📥 Received request:", { imageUrl, location });
+
+//   if (!imageUrl || !Array.isArray(location) || location.length !== 2) {
+//     return res.status(400).json({ error: "Missing or invalid imageUrl or location" });
+//   }
+
+//   const [lat, lon] = location;
+//   const scriptPath = path.join(__dirname, "..", "model", "predict.py");
+//   const pythonCmd = `python "${scriptPath}" "${imageUrl}"`;
+
+//   exec(pythonCmd, async (err, stdout, stderr) => {
+//     if (err) {
+//       console.error("❌ Prediction Error:", err.message);
+//       return res.status(500).json({ error: "Prediction failed", details: stderr });
 //     }
 
-//     const [lat, lon] = location;
-//     const scriptPath = path.join(__dirname, "../model/predict.py");
-//     const pythonCommand = `python "${scriptPath}" "${imageUrl}"`;
+//     try {
+//       const prediction = JSON.parse(stdout.trim());
+//       console.log("🧠 Model prediction:", prediction);
 
-//     exec(pythonCommand, async (error, stdout, stderr) => {
-//       if (error) {
-//         console.error("❌ Prediction Error:", error.message);
-//         return res.status(500).json({ error: "Prediction failed", details: stderr || error.message });
+//       if (prediction.isRoad === false) {
+//         return res.status(200).json({ error: prediction.message || "Image is not a road" });
 //       }
 
-//       try {
-//         const prediction = JSON.parse(stdout.trim());
-//         console.log("🧠 Model prediction:", prediction);
+//       const { typeOfDamage, severity, image: base64_image } = prediction;
 
-//         const { typeOfDamage, severity, image: base64_image } = prediction;
+//       const recommendedAction = await getRecommendedAction(
+//         typeOfDamage.join(", "),
+//         severity
+//       );
 
-//         const recommendedAction = await getRecommendedAction(
-//           typeOfDamage.join(", "),
-//           severity
-//         );
+//       const newReport = new Report({
+//         reportId: `REP-${Date.now()}`,
+//         dateTime: new Date(),
+//         location,
+//         typeOfDamage,
+//         severity,
+//         imageUrl,
+//         image: base64_image || null,
+//         recommendedAction,
+//       });
 
-//         const newReport = new Report({
-//           reportId: `REP-${Date.now()}`,
-//           dateTime: new Date(),
-//           location,
-//           typeOfDamage,
-//           severity,
-//           imageUrl,
-//           image: base64_image || null,
-//           recommendedAction,
-//         });
+//       await newReport.save();
 
-//         await newReport.save();
+//       const city = await getCityFromCoordinates(lat, lon);
 
-//         const city = await getCityFromCoordinates(lat, lon);
-//         if (severity === "Severe") {
-//           await notifyUsers(city, newReport);
-//         }
-//         res.json({ message: "Prediction saved", report: newReport });
-//       } catch (parseError) {
-//         console.error("❌ JSON Parse Error:", parseError.message);
-//         res.status(500).json({ error: "Failed to parse model output", details: parseError.message });
+//       if (severity === "Severe") {
+//         await notifyUsers(city, newReport);
 //       }
-//     });
-//   } catch (error) {
-//     console.error("❌ Server Error:", error.message);
-//     res.status(500).json({ error: "Internal Server Error", details: error.message });
-//   }
+
+//       // Send prediction details only — NO 'message' field
+//       res.json({
+//         typeOfDamage: newReport.typeOfDamage,
+//         severity: newReport.severity,
+//         objectsDetected: prediction.objectsDetected || [],
+//         image: newReport.image,
+//         recommendedAction: newReport.recommendedAction,
+//       });
+
+//     } catch (parseError) {
+//       console.error("❌ JSON Parse Error:", parseError.message);
+//       res.status(500).json({ error: "Failed to parse model output" });
+//     }
+//   });
 // });
 
-// // ✅ Fetch all reports
+
+// // ✅ Get all reports
 // app.get("/api/reports", async (req, res) => {
 //   try {
 //     const reports = await Report.find().sort({ dateTime: -1 });
 //     res.json(reports);
-//   } catch (error) {
+//   } catch {
 //     res.status(500).json({ error: "Failed to fetch reports" });
 //   }
 // });
-
-// // ✅ Fetch report by ID
+// // ✅ Get report by ID (including imageUrl)
 // app.get("/api/reports/:id", async (req, res) => {
 //   try {
 //     const report = await Report.findById(req.params.id);
-//     if (!report) return res.status(404).send({ message: "Report not found" });
-//     res.status(200).json(report);
-//   } catch (error) {
-//     res.status(500).json({ message: "Failed to fetch report details" });
+//     if (!report) return res.status(404).json({ message: "Report not found" });
+
+//     // Include the status field here
+//     res.json({
+//       reportId: report.reportId,
+//       dateTime: report.dateTime,
+//       location: report.location,
+//       typeOfDamage: report.typeOfDamage,
+//       severity: report.severity,
+//       imageUrl: report.imageUrl,
+//       image: report.image,
+//       recommendedAction: report.recommendedAction,
+//       status: report.status,  // <-- ADD THIS LINE
+//     });
+//   } catch {
+//     res.status(500).json({ message: "Failed to fetch report" });
 //   }
 // });
 
-// // ✅ Start server
+// app.patch("/api/reports/:id/status", async (req, res) => {
+//   const { status } = req.body;
+//   try {
+//     const report = await Report.findByIdAndUpdate(
+//       req.params.id,
+//       { status },
+//       { new: true }
+//     );
+//     if (!report) return res.status(404).json({ message: "Report not found" });
+//     res.json(report);
+//   } catch (err) {
+//     res.status(500).json({ error: "Failed to update status" });
+//   }
+// });
+
+// // ✅ Get report by ID
+// // app.get("/api/reports/:id", async (req, res) => {
+// //   try {
+// //     const report = await Report.findById(req.params.id);
+// //     if (!report) return res.status(404).json({ message: "Report not found" });
+// //     res.json(report);
+// //   } catch {
+// //     res.status(500).json({ message: "Failed to fetch report" });
+// //   }
+// // });
+
+// // ✅ Start the server
 // const PORT = process.env.WEBAPP_PORT || 8000;
 // app.listen(PORT, () => {
 //   console.log(`✅ Server running on port ${PORT}`);
 // });
+// ✅ Required Dependencies
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
@@ -202,168 +277,136 @@ const { exec } = require("child_process");
 const path = require("path");
 const axios = require("axios");
 const nodemailer = require("nodemailer");
+const NodeCache = require("node-cache");
+const morgan = require("morgan");
 
+// ✅ Environment Config
 dotenv.config();
-
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: "*" }));
+app.use(morgan("dev"));
 
-// ✅ MongoDB Connection
+// ✅ Connect to MongoDB
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ MongoDB Connected"))
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB Connected Successfully!"))
   .catch((err) => console.error("❌ DB Connection Error:", err));
 
-// ✅ Report Schema
-const reportSchema = new mongoose.Schema(
-  {
-    reportId: { type: String, unique: true },
-    dateTime: { type: Date, default: Date.now },
-    location: { type: Array, required: true },
-    typeOfDamage: { type: Array },
-    severity: { type: String },
-    imageUrl: { type: String, required: true },
-    image: { type: String }, // base64
-    recommendedAction: { type: String },
-    status: { type: String, default: "Pending" }, // <-- NEW
-  },
-  { collection: "reports" }
-);
-
+// ✅ Mongoose Schema
+const reportSchema = new mongoose.Schema({
+  reportId: { type: String, unique: true },
+  dateTime: { type: Date, default: Date.now },
+  location: { type: Array, required: true },
+  typeOfDamage: { type: Array },
+  severity: { type: String },
+  imageUrl: { type: String, required: true },
+  image: { type: String },
+  recommendedAction: { type: String },
+  city: { type: String },
+  status: { type: String, default: "Pending" },
+}, { collection: "reports" });
 
 const Report = mongoose.model("Report", reportSchema);
 
-// ✅ Get city from coordinates using OpenCage
+// ✅ City Cache
+const cityCache = new NodeCache({ stdTTL: 3600 });
+
 async function getCityFromCoordinates(lat, lon) {
+  const cacheKey = `${lat},${lon}`;
+  const cached = cityCache.get(cacheKey);
+  if (cached) return cached;
+
   try {
-    if (!process.env.OPENCAGE_API_KEY) throw new Error("Missing OPENCAGE_API_KEY");
-
-    const response = await axios.get(
-      `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${process.env.OPENCAGE_API_KEY}`
-    );
-
-    const result = response.data.results?.[0];
-    const components = result?.components;
-
-    return (
-      components?.city ||
-      components?.town ||
-      components?.village ||
-      components?.state_district ||
-      "Unknown"
-    );
-  } catch (error) {
-    console.error("❌ Failed to reverse geocode:", error.message);
+    const apiKey = process.env.OPENCAGE_API_KEY;
+    const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${apiKey}`;
+    const response = await axios.get(url);
+    const components = response.data.results?.[0]?.components;
+    const city = components?.city || components?.town || components?.village || components?.state_district || "Unknown";
+    cityCache.set(cacheKey, city);
+    return city;
+  } catch (err) {
+    console.error("❌ Reverse geocoding failed:", err.message);
     return "Unknown";
   }
 }
 
-// ✅ Send email notifications
+// ✅ Email Alerts
 async function notifyUsers(city, report) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    return console.warn("⚠️ Email credentials not set, skipping notification");
-  }
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
 
   try {
-    const response = await axios.get(
-      `${process.env.AUTH_SERVER_URL}/api/users-by-city/${city}`
-    );
+    const response = await axios.get(`${process.env.AUTH_SERVER_URL}/api/users-by-city/${city}`);
     const users = response.data;
+    if (!users.length) return;
 
-    if (!users.length) {
-      console.log(`ℹ️ No users found in ${city}`);
-      return;
-    }
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
-    });    
+    });
+
+    const [lat, lon] = report.location;
+    const mapsUrl = `https://www.google.com/maps?q=${lat},${lon}`;
 
     for (const user of users) {
-      const [lat, lon] = report.location;
-      const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lon}`;
-    
       await transporter.sendMail({
-        from: `"SafeStreet Alerts" <${process.env.EMAIL_USER}>`,
+        from: `SafeStreet Alerts <${process.env.EMAIL_USER}>`,
         to: user.email,
-        subject: "New Road Report in Your Area",
+        subject: "🚧 New Road Report in Your Area",
         html: `
           <p>Hi ${user.username},</p>
           <p>A new road damage has been reported in <b>${city}</b>.</p>
           <p><strong>Type:</strong> ${report.typeOfDamage.join(", ")}</p>
           <p><strong>Severity:</strong> ${report.severity}</p>
-          <p><strong>Location:</strong> <a href="${googleMapsUrl}" target="_blank">View on Google Maps</a></p>
-          <br />
-          <p>For more details, visit the SafeStreet website.</p>
-          <hr />
-        `
+          <p><strong>Location:</strong> <a href="${mapsUrl}" target="_blank">Google Maps</a></p>
+          <br /><p>Stay safe,<br/>SafeStreet Team</p>
+        `,
       });
     }
-
-    console.log(`📧 Emails sent to users in ${city}`);
-  } catch (error) {
-    console.error("❌ Failed to notify users:", error.message);
+    console.log(`📧 Notifications sent to ${users.length} users in ${city}`);
+  } catch (err) {
+    console.error("❌ Email error:", err.message);
   }
 }
 
-// ✅ Get recommended action from Python script
+// ✅ Recommended Action from Python
 async function getRecommendedAction(typeOfDamage, severity) {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(__dirname, "../model/recommend_action.py");
-    const command = `python "${scriptPath}" "${typeOfDamage}" "${severity}"`;
-    const env = { ...process.env };
-
-    exec(command, { env }, (error, stdout, stderr) => {
-      if (error) {
-        console.error("❌ Gemini Script Error:", error.message);
-        return reject("Gemini script failed");
-      }
+    const cmd = `python "${scriptPath}" "${typeOfDamage}" "${severity}"`;
+    exec(cmd, (err, stdout) => {
+      if (err) return reject("Action script failed");
       resolve(stdout.trim());
     });
   });
 }
 
-// ✅ Predict and Save
+// ✅ Predict API
 app.post("/api/predict", async (req, res) => {
   const { imageUrl, location } = req.body;
-
-  console.log("📥 Received request:", { imageUrl, location });
-
   if (!imageUrl || !Array.isArray(location) || location.length !== 2) {
-    return res.status(400).json({ error: "Missing or invalid imageUrl or location" });
+    return res.status(400).json({ error: "Invalid imageUrl or location" });
   }
 
   const [lat, lon] = location;
-  const scriptPath = path.join(__dirname, "..", "model", "predict.py");
-  const pythonCmd = `python "${scriptPath}" "${imageUrl}"`;
+  const scriptPath = path.join(__dirname, "../model/predict.py");
+  const command = `python "${scriptPath}" "${imageUrl}"`;
 
-  exec(pythonCmd, async (err, stdout, stderr) => {
-    if (err) {
-      console.error("❌ Prediction Error:", err.message);
-      return res.status(500).json({ error: "Prediction failed", details: stderr });
-    }
+  exec(command, async (err, stdout) => {
+    if (err) return res.status(500).json({ error: "Prediction failed" });
 
     try {
       const prediction = JSON.parse(stdout.trim());
-      console.log("🧠 Model prediction:", prediction);
-
       if (prediction.isRoad === false) {
-        return res.status(200).json({ error: prediction.message || "Image is not a road" });
+        return res.status(200).json({ error: prediction.message || "Not a road image" });
       }
 
-      const { typeOfDamage, severity, image: base64_image } = prediction;
-
-      const recommendedAction = await getRecommendedAction(
-        typeOfDamage.join(", "),
-        severity
-      );
+      const { typeOfDamage, severity, image: base64Image, objectsDetected } = prediction;
+      const recommendedAction = await getRecommendedAction(typeOfDamage.join(", "), severity);
+      const city = await getCityFromCoordinates(lat, lon);
 
       const newReport = new Report({
         reportId: `REP-${Date.now()}`,
@@ -372,36 +415,22 @@ app.post("/api/predict", async (req, res) => {
         typeOfDamage,
         severity,
         imageUrl,
-        image: base64_image || null,
+        image: base64Image,
         recommendedAction,
+        city,
       });
 
       await newReport.save();
+      if (severity === "Severe") await notifyUsers(city, newReport);
 
-      const city = await getCityFromCoordinates(lat, lon);
-
-      if (severity === "Severe") {
-        await notifyUsers(city, newReport);
-      }
-
-      // Send prediction details only — NO 'message' field
-      res.json({
-        typeOfDamage: newReport.typeOfDamage,
-        severity: newReport.severity,
-        objectsDetected: prediction.objectsDetected || [],
-        image: newReport.image,
-        recommendedAction: newReport.recommendedAction,
-      });
-
-    } catch (parseError) {
-      console.error("❌ JSON Parse Error:", parseError.message);
-      res.status(500).json({ error: "Failed to parse model output" });
+      res.json({ typeOfDamage, severity, objectsDetected, image: base64Image, recommendedAction });
+    } catch (err) {
+      res.status(500).json({ error: "Prediction parsing failed" });
     }
   });
 });
 
-
-// ✅ Get all reports
+// ✅ Get All Reports
 app.get("/api/reports", async (req, res) => {
   try {
     const reports = await Report.find().sort({ dateTime: -1 });
@@ -410,57 +439,33 @@ app.get("/api/reports", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch reports" });
   }
 });
-// ✅ Get report by ID (including imageUrl)
+
+// ✅ Get Single Report
 app.get("/api/reports/:id", async (req, res) => {
   try {
     const report = await Report.findById(req.params.id);
     if (!report) return res.status(404).json({ message: "Report not found" });
-
-    // Include the status field here
-    res.json({
-      reportId: report.reportId,
-      dateTime: report.dateTime,
-      location: report.location,
-      typeOfDamage: report.typeOfDamage,
-      severity: report.severity,
-      imageUrl: report.imageUrl,
-      image: report.image,
-      recommendedAction: report.recommendedAction,
-      status: report.status,  // <-- ADD THIS LINE
-    });
+    res.json(report);
   } catch {
-    res.status(500).json({ message: "Failed to fetch report" });
+    res.status(500).json({ error: "Failed to fetch report" });
   }
 });
 
+// ✅ Update Status
 app.patch("/api/reports/:id/status", async (req, res) => {
-  const { status } = req.body;
   try {
     const report = await Report.findByIdAndUpdate(
       req.params.id,
-      { status },
+      { status: req.body.status },
       { new: true }
     );
     if (!report) return res.status(404).json({ message: "Report not found" });
     res.json(report);
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to update status" });
   }
 });
 
-// ✅ Get report by ID
-// app.get("/api/reports/:id", async (req, res) => {
-//   try {
-//     const report = await Report.findById(req.params.id);
-//     if (!report) return res.status(404).json({ message: "Report not found" });
-//     res.json(report);
-//   } catch {
-//     res.status(500).json({ message: "Failed to fetch report" });
-//   }
-// });
-
-// ✅ Start the server
-const PORT = process.env.WEBAPP_PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
+// ✅ Start Server
+const PORT = process.env.WEBAPP_PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

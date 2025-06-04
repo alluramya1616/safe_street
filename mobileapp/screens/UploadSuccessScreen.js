@@ -23,7 +23,6 @@ const UploadSuccessScreen = ({ navigation }) => {
       />
       <Text style={styles.congrats}>Congratulations!</Text>
       <Text style={styles.message}>Your image was uploaded successfully!</Text>
-      <MaterialCommunityIcons name="check-circle" size={50} color="#155724" />
     </View>
   );
 };

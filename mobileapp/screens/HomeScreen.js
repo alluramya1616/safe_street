@@ -92,12 +92,11 @@ const HomeScreen = ({ setIsLoggedIn, userInfo }) => {
   }, []);
 
   const initialRegion = {
-    latitude: 21.146633,
-    longitude: 79.08886,
-    latitudeDelta: 15,
-    longitudeDelta: 15,
-  };
-
+  latitude: 17.3850,
+  longitude: 78.4867,
+  latitudeDelta: 0.1,
+  longitudeDelta: 0.1,
+};
   const events = selectedCategory === "traffic" ? trafficEvents : roadDamageEvents;
 
   const handleMarkerPress = (index) => {

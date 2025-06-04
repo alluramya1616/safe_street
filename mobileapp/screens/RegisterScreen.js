@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   SafeAreaView,
@@ -8,14 +7,14 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import PhoneInput from "react-native-phone-number-input";
 import { TextInput } from "react-native-paper";
 
 const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [phoneInput, setPhoneInput] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,156 +26,136 @@ const RegisterScreen = ({ navigation }) => {
     setShowConfirmPassword(!showConfirmPassword);
 
   const register = () => {
-    if (
-      name === "" ||
-      email === "" ||
-      password === "" ||
-      confirmPassword === ""
-    ) {
+    if (name === "" || email === "" || password === "" || confirmPassword === "") {
       Alert.alert("Validation Error", "Please fill out all the fields!");
-    } else if (
-      phoneNumber !== "" &&
-      !phoneInput?.isValidNumber(phoneNumber)
-    ) {
-      Alert.alert("Validation Error", "Invalid Phone Number");
-    } else if (password !== confirmPassword) {
-      Alert.alert("Validation Error", "Passwords do not match");
-    } else {
-      const user = {
-        name,
-        email,
-        phone: phoneNumber,
-        password, // Note: For real apps, never store plain passwords
-      };
-
-      // You can store `user` in AsyncStorage or send it to a backend here
-
-      Alert.alert(
-        "Success",
-        "Registration successful. Please login to continue.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              navigation.navigate("Login", {
-                registeredEmail: email,
-              });
-            },
-          },
-        ]
-      );
+      return;
     }
+    if (password !== confirmPassword) {
+      Alert.alert("Validation Error", "Passwords do not match");
+      return;
+    }
+
+    // Proceed with registration logic here
+
+    Alert.alert(
+      "Success",
+      "Registration successful. Please login to continue.",
+      [
+        {
+          text: "OK",
+          onPress: () => navigation.navigate("Login", { registeredEmail: email }),
+        },
+      ]
+    );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Image
-          style={styles.logo}
-          source={require("../assets/logo.png")}
-        />
-        <Text style={styles.safeStreetText}>SAFE STREET</Text>
-      </View>
-
-      <View style={styles.titleContainer}>
-        <Text style={styles.registerText}>Register</Text>
-      </View>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="words"
-          style={styles.textInput}
-          placeholderTextColor="#aaa"
-          theme={{ colors: { primary: "#000" } }}
-        />
-
-        <PhoneInput
-          ref={(input) => setPhoneInput(input)}
-          defaultCode="IN"
-          placeholder="Phone Number"
-          value={phoneNumber}
-          onChangeFormattedText={(text) => setPhoneNumber(text)}
-          containerStyle={styles.phoneInputContainer}
-          textContainerStyle={styles.phoneInputTextContainer}
-          textInputStyle={styles.phoneInputText}
-          codeTextStyle={{ color: "#000" }}
-          textInputProps={{
-            placeholderTextColor: "#aaa",
-            style: { color: "#000" },
-          }}
-        />
-
-        <TextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          style={styles.textInput}
-          placeholderTextColor="#aaa"
-          theme={{ colors: { primary: "#000" } }}
-        />
-
-        <TextInput
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
-          autoCapitalize="none"
-          style={styles.textInput}
-          placeholderTextColor="#aaa"
-          right={
-            <TextInput.Icon
-              icon={showPassword ? "eye" : "eye-off"}
-              color="#C4C4C4"
-              onPress={toggleShowPassword}
-            />
-          }
-          theme={{ colors: { primary: "#000" } }}
-        />
-
-        <TextInput
-          placeholder="Confirm Password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry={!showConfirmPassword}
-          autoCapitalize="none"
-          style={styles.textInput}
-          placeholderTextColor="#aaa"
-          right={
-            <TextInput.Icon
-              icon={showConfirmPassword ? "eye" : "eye-off"}
-              color="#C4C4C4"
-              onPress={toggleShowConfirmPassword}
-            />
-          }
-          theme={{ colors: { primary: "#000" } }}
-        />
-      </View>
-
-      <TouchableOpacity style={styles.registerButton} onPress={register}>
-        <Text style={styles.registerButtonText}>Register</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.loginLink}
-        onPress={() => navigation.navigate("Login")}
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
-        <Text style={styles.linkText}>Have an Account? Login</Text>
-      </TouchableOpacity>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.logoContainer}>
+            <Image
+              style={styles.logo}
+              source={require("../assets/logo.png")}
+            />
+            <Text style={styles.safeStreetText}>SAFE STREET</Text>
+          </View>
+
+          <View style={styles.titleContainer}>
+            <Text style={styles.registerText}>Register</Text>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              placeholder="Name"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              style={styles.textInput}
+              placeholderTextColor="#aaa"
+              theme={{ colors: { primary: "#000" } }}
+            />
+
+            <TextInput
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              style={styles.textInput}
+              placeholderTextColor="#aaa"
+              theme={{ colors: { primary: "#000" } }}
+            />
+
+            <TextInput
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              style={styles.textInput}
+              placeholderTextColor="#aaa"
+              right={
+                <TextInput.Icon
+                  icon={showPassword ? "eye" : "eye-off"}
+                  color="#C4C4C4"
+                  onPress={toggleShowPassword}
+                />
+              }
+              theme={{ colors: { primary: "#000" } }}
+            />
+
+            <TextInput
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={!showConfirmPassword}
+              autoCapitalize="none"
+              style={styles.textInput}
+              placeholderTextColor="#aaa"
+              right={
+                <TextInput.Icon
+                  icon={showConfirmPassword ? "eye" : "eye-off"}
+                  color="#C4C4C4"
+                  onPress={toggleShowConfirmPassword}
+                />
+              }
+              theme={{ colors: { primary: "#000" } }}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.registerButton} onPress={register}>
+            <Text style={styles.registerButtonText}>Register</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.loginLink}
+            onPress={() => navigation.navigate("Login")}
+          >
+            <Text style={styles.linkText}>Have an Account? Login</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    padding: 16,
     backgroundColor: "#F8F9FA",
-    justifyContent: "center",
+  },
+  scrollContainer: {
+    flexGrow: 1,
     alignItems: "center",
+    paddingVertical: 20,
+    paddingHorizontal: 16,
   },
   logoContainer: {
     justifyContent: "center",
@@ -205,28 +184,9 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   inputContainer: {
-    width: "100%",
+    width: "90%",
     alignItems: "center",
     marginBottom: 10,
-  },
-  phoneInputContainer: {
-    width: "90%",
-    borderRadius: 10,
-    backgroundColor: "#FFF",
-    borderColor: "#ddd",
-    borderWidth: 1,
-    marginBottom: 16,
-    paddingLeft: 16,
-    paddingRight: 16,
-    height: 50,
-  },
-  phoneInputTextContainer: {
-    borderRadius: 10,
-    backgroundColor: "#FFF",
-  },
-  phoneInputText: {
-    color: "#000",
-    fontSize: 16,
   },
   textInput: {
     width: "90%",
@@ -266,4 +226,3 @@ const styles = StyleSheet.create({
 });
 
 export default RegisterScreen;
-

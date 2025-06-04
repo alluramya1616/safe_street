@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   SafeAreaView,
@@ -8,6 +7,9 @@ import {
   Text,
   Image,
   Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { TextInput } from "react-native-paper";
 
@@ -38,72 +40,77 @@ const LoginScreen = ({ navigation, setIsLoggedIn, setUserInfo }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      
-      <View style={styles.logoContainer}>
-        <Image style={styles.logo} source={require("../assets/logo.png")} />
-      </View>
-
-      
-      <View style={styles.safeStreetContainer}>
-        <Text style={styles.safeStreetText}>SAFE STREET</Text>
-      </View>
-
-     
-      <View style={styles.loginContainer}>
-        <Text style={styles.loginText}>Login</Text>
-      </View>
-
-     
-      <View style={styles.inputContainer}>
-        <TextInput
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="words"
-          style={styles.textInput}
-          placeholderTextColor="#aaa"
-          theme={{ colors: { primary: "#000" } }}
-        />
-        <TextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          style={styles.textInput}
-          placeholderTextColor="#aaa"
-          theme={{ colors: { primary: "#000" } }}
-        />
-        <TextInput
-          secureTextEntry={!showPassword}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Password"
-          autoCapitalize="none"
-          style={styles.textInput}
-          placeholderTextColor="#aaa"
-          right={
-            <IconButton
-              icon={showPassword ? "eye" : "eye-off"}
-              color="#C4C4C4"
-              onPress={toggleShowPassword}
-            />
-          }
-          theme={{ colors: { primary: "#000" } }}
-        />
-      </View>
-
-     
-      <TouchableOpacity style={styles.loginButton} onPress={login}>
-        <Text style={styles.loginButtonText}>Login</Text>
-      </TouchableOpacity>
-
-      
-      <TouchableOpacity
-        style={styles.loginLink}
-        onPress={() => navigation.navigate("Register")}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
-        <Text style={styles.linkText}>Don't have an account? Register</Text>
-      </TouchableOpacity>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.logoContainer}>
+            <Image style={styles.logo} source={require("../assets/logo.png")} />
+          </View>
+
+          <View style={styles.safeStreetContainer}>
+            <Text style={styles.safeStreetText}>SAFE STREET</Text>
+          </View>
+
+          <View style={styles.loginContainer}>
+            <Text style={styles.loginText}>Login</Text>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              placeholder="Name"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              style={styles.textInput}
+              placeholderTextColor="#aaa"
+              theme={{ colors: { primary: "#000" } }}
+            />
+            <TextInput
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              style={styles.textInput}
+              placeholderTextColor="#aaa"
+              theme={{ colors: { primary: "#000" } }}
+            />
+            <TextInput
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              autoCapitalize="none"
+              style={styles.textInput}
+              placeholderTextColor="#aaa"
+              right={
+                <IconButton
+                  icon={showPassword ? "eye" : "eye-off"}
+                  color="#C4C4C4"
+                  onPress={toggleShowPassword}
+                />
+              }
+              theme={{ colors: { primary: "#000" } }}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.loginButton} onPress={login}>
+            <Text style={styles.loginButtonText}>Login</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.loginLink}
+            onPress={() => navigation.navigate("Register")}
+          >
+            <Text style={styles.linkText}>Don't have an account? Register</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -111,10 +118,14 @@ const LoginScreen = ({ navigation, setIsLoggedIn, setUserInfo }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: "#F8F9FA",
-    justifyContent: "center",
+  },
+  scrollContainer: {
+    flexGrow: 1,
     alignItems: "center",
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    justifyContent: "center",
   },
   logoContainer: {
     justifyContent: "center",
@@ -147,12 +158,12 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   inputContainer: {
-    width: "100%",
+    width: "90%",
     marginBottom: 24,
     alignItems: "center",
   },
   textInput: {
-    width: "90%",
+    width: "80%",
     height: 50,
     borderRadius: 10,
     backgroundColor: "#FFF",
@@ -165,7 +176,7 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   loginButton: {
-    width: "90%",
+    width: "80%",
     height: 50,
     backgroundColor: "#16247d",
     borderRadius: 10,
@@ -189,4 +200,3 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
-
