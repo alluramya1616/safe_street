@@ -12,6 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { TextInput } from "react-native-paper";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Icon button for password visibility toggle
 const IconButton = ({ icon = "eye-off", color = "#C4C4C4", onPress }) => (
@@ -19,7 +20,7 @@ const IconButton = ({ icon = "eye-off", color = "#C4C4C4", onPress }) => (
 );
 
 const LoginScreen = ({ navigation, setIsLoggedIn, setUserInfo }) => {
-  const [name, setName] = useState(""); // New Name Field
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -28,39 +29,63 @@ const LoginScreen = ({ navigation, setIsLoggedIn, setUserInfo }) => {
     setShowPassword(!showPassword);
   };
 
-  const login = () => {
+  const login = async () => {
     if (name === "" || email === "" || password === "") {
       Alert.alert("Login Failed", "Please enter your name, email, and password.");
-    } else {
-      setUserInfo({ name, email });
-      setIsLoggedIn(true);
-      Alert.alert("Login Successful", `Welcome back, ${name}!`);
+      return;
+    }
+
+    try {
+      const storedUsers = await AsyncStorage.getItem("users");
+      const parsedUsers = storedUsers ? JSON.parse(storedUsers) : [];
+
+      const matchedUser = parsedUsers.find(
+        (user) =>
+          user.name === name &&
+          user.email === email &&
+          user.password === password
+      );
+
+      if (matchedUser) {
+        setUserInfo({ name: matchedUser.name, email: matchedUser.email });
+        setIsLoggedIn(true);
+        Alert.alert("Login Successful", `Welcome back, ${matchedUser.name}!`);
+      } else {
+        Alert.alert("Login Failed", "Invalid credentials. Please try again.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      Alert.alert("Error", "Something went wrong during login.");
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Logo */}
           <View style={styles.logoContainer}>
             <Image style={styles.logo} source={require("../assets/logo.png")} />
           </View>
 
+          {/* SAFE STREET text */}
           <View style={styles.safeStreetContainer}>
             <Text style={styles.safeStreetText}>SAFE STREET</Text>
           </View>
 
+          {/* Login title */}
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Login</Text>
           </View>
 
+          {/* Inputs */}
           <View style={styles.inputContainer}>
             <TextInput
               placeholder="Name"
@@ -99,10 +124,12 @@ const LoginScreen = ({ navigation, setIsLoggedIn, setUserInfo }) => {
             />
           </View>
 
+          {/* Login Button */}
           <TouchableOpacity style={styles.loginButton} onPress={login}>
             <Text style={styles.loginButtonText}>Login</Text>
           </TouchableOpacity>
 
+          {/* Register Link */}
           <TouchableOpacity
             style={styles.loginLink}
             onPress={() => navigation.navigate("Register")}
@@ -116,21 +143,21 @@ const LoginScreen = ({ navigation, setIsLoggedIn, setUserInfo }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: "#F8F9FA",
   },
-  scrollContainer: {
+  scrollContent: {
     flexGrow: 1,
     alignItems: "center",
-    paddingVertical: 20,
-    paddingHorizontal: 16,
     justifyContent: "center",
+    paddingVertical: 20,
   },
   logoContainer: {
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 10,
+    marginTop: 30,
   },
   logo: {
     width: 300,
@@ -150,7 +177,7 @@ const styles = StyleSheet.create({
   loginContainer: {
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 10,
   },
   loginText: {
     fontSize: 28,

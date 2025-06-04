@@ -278,14 +278,11 @@ const path = require("path");
 const axios = require("axios");
 const nodemailer = require("nodemailer");
 const NodeCache = require("node-cache");
-const morgan = require("morgan");
 
-// ✅ Environment Config
 dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: "*" }));
-app.use(morgan("dev"));
 
 // ✅ Connect to MongoDB
 mongoose
@@ -303,42 +300,45 @@ const reportSchema = new mongoose.Schema({
   imageUrl: { type: String, required: true },
   image: { type: String },
   recommendedAction: { type: String },
-  city: { type: String },
   status: { type: String, default: "Pending" },
 }, { collection: "reports" });
 
 const Report = mongoose.model("Report", reportSchema);
 
-// ✅ City Cache
-const cityCache = new NodeCache({ stdTTL: 3600 });
+// ✅ In-memory cache for cities
+const cityCache = new NodeCache({ stdTTL: 3600 }); // 1 hour TTL
 
+// ✅ Get city from coordinates
 async function getCityFromCoordinates(lat, lon) {
   const cacheKey = `${lat},${lon}`;
-  const cached = cityCache.get(cacheKey);
-  if (cached) return cached;
+  const cachedCity = cityCache.get(cacheKey);
+  if (cachedCity) return cachedCity;
 
   try {
     const apiKey = process.env.OPENCAGE_API_KEY;
-    const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${apiKey}`;
-    const response = await axios.get(url);
+    const response = await axios.get(`https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${apiKey}`);
     const components = response.data.results?.[0]?.components;
     const city = components?.city || components?.town || components?.village || components?.state_district || "Unknown";
+
     cityCache.set(cacheKey, city);
     return city;
-  } catch (err) {
-    console.error("❌ Reverse geocoding failed:", err.message);
+  } catch (error) {
+    console.error("❌ Reverse geocoding failed:", error.message);
     return "Unknown";
   }
 }
 
-// ✅ Email Alerts
+// ✅ Send email alerts to users
 async function notifyUsers(city, report) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    return console.warn("⚠️ Email credentials not set.");
+  }
 
   try {
     const response = await axios.get(`${process.env.AUTH_SERVER_URL}/api/users-by-city/${city}`);
     const users = response.data;
-    if (!users.length) return;
+
+    if (!users.length) return console.log(`ℹ️ No users in ${city}`);
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -353,7 +353,7 @@ async function notifyUsers(city, report) {
 
     for (const user of users) {
       await transporter.sendMail({
-        from: `SafeStreet Alerts <${process.env.EMAIL_USER}>`,
+        from: `"SafeStreet Alerts" <${process.env.EMAIL_USER}>`,
         to: user.email,
         subject: "🚧 New Road Report in Your Area",
         html: `
@@ -361,30 +361,35 @@ async function notifyUsers(city, report) {
           <p>A new road damage has been reported in <b>${city}</b>.</p>
           <p><strong>Type:</strong> ${report.typeOfDamage.join(", ")}</p>
           <p><strong>Severity:</strong> ${report.severity}</p>
-          <p><strong>Location:</strong> <a href="${mapsUrl}" target="_blank">Google Maps</a></p>
-          <br /><p>Stay safe,<br/>SafeStreet Team</p>
+          <p><strong>Location:</strong> <a href="${mapsUrl}" target="_blank">View on Google Maps</a></p>
+          <br />
+          <p>Stay safe,<br/>SafeStreet Team</p>
         `,
       });
     }
+
     console.log(`📧 Notifications sent to ${users.length} users in ${city}`);
-  } catch (err) {
-    console.error("❌ Email error:", err.message);
+  } catch (error) {
+    console.error("❌ Email notification error:", error.message);
   }
 }
 
-// ✅ Recommended Action from Python
+// ✅ Get recommended action from Python
 async function getRecommendedAction(typeOfDamage, severity) {
   return new Promise((resolve, reject) => {
     const scriptPath = path.join(__dirname, "../model/recommend_action.py");
-    const cmd = `python "${scriptPath}" "${typeOfDamage}" "${severity}"`;
-    exec(cmd, (err, stdout) => {
-      if (err) return reject("Action script failed");
+    const command = `python "${scriptPath}" "${typeOfDamage}" "${severity}"`;
+    exec(command, (error, stdout) => {
+      if (error) {
+        console.error("❌ recommend_action.py error:", error.message);
+        return reject("Action script failed");
+      }
       resolve(stdout.trim());
     });
   });
 }
 
-// ✅ Predict API
+// ✅ Predict and Save report
 app.post("/api/predict", async (req, res) => {
   const { imageUrl, location } = req.body;
   if (!imageUrl || !Array.isArray(location) || location.length !== 2) {
@@ -395,8 +400,11 @@ app.post("/api/predict", async (req, res) => {
   const scriptPath = path.join(__dirname, "../model/predict.py");
   const command = `python "${scriptPath}" "${imageUrl}"`;
 
-  exec(command, async (err, stdout) => {
-    if (err) return res.status(500).json({ error: "Prediction failed" });
+  exec(command, async (err, stdout, stderr) => {
+    if (err) {
+      console.error("❌ Predict script error:", err.message);
+      return res.status(500).json({ error: "Prediction failed" });
+    }
 
     try {
       const prediction = JSON.parse(stdout.trim());
@@ -405,8 +413,11 @@ app.post("/api/predict", async (req, res) => {
       }
 
       const { typeOfDamage, severity, image: base64Image, objectsDetected } = prediction;
-      const recommendedAction = await getRecommendedAction(typeOfDamage.join(", "), severity);
-      const city = await getCityFromCoordinates(lat, lon);
+
+      const recommendedAction = await getRecommendedAction(
+        typeOfDamage.join(", "),
+        severity
+      );
 
       const newReport = new Report({
         reportId: `REP-${Date.now()}`,
@@ -415,22 +426,32 @@ app.post("/api/predict", async (req, res) => {
         typeOfDamage,
         severity,
         imageUrl,
-        image: base64Image,
+        image: base64Image || null,
         recommendedAction,
-        city,
       });
 
       await newReport.save();
-      if (severity === "Severe") await notifyUsers(city, newReport);
+      const city = await getCityFromCoordinates(lat, lon);
 
-      res.json({ typeOfDamage, severity, objectsDetected, image: base64Image, recommendedAction });
+      if (severity === "Severe") {
+        await notifyUsers(city, newReport);
+      }
+
+      res.json({
+        typeOfDamage,
+        severity,
+        objectsDetected,
+        image: base64Image,
+        recommendedAction,
+      });
     } catch (err) {
-      res.status(500).json({ error: "Prediction parsing failed" });
+      console.error("❌ JSON parse error:", err.message);
+      res.status(500).json({ error: "Prediction JSON parsing failed" });
     }
   });
 });
 
-// ✅ Get All Reports
+// ✅ Get all reports
 app.get("/api/reports", async (req, res) => {
   try {
     const reports = await Report.find().sort({ dateTime: -1 });
@@ -440,23 +461,35 @@ app.get("/api/reports", async (req, res) => {
   }
 });
 
-// ✅ Get Single Report
+// ✅ Get report by ID
 app.get("/api/reports/:id", async (req, res) => {
   try {
     const report = await Report.findById(req.params.id);
     if (!report) return res.status(404).json({ message: "Report not found" });
-    res.json(report);
+
+    res.json({
+      reportId: report.reportId,
+      dateTime: report.dateTime,
+      location: report.location,
+      typeOfDamage: report.typeOfDamage,
+      severity: report.severity,
+      imageUrl: report.imageUrl,
+      image: report.image,
+      recommendedAction: report.recommendedAction,
+      status: report.status,
+    });
   } catch {
-    res.status(500).json({ error: "Failed to fetch report" });
+    res.status(500).json({ message: "Failed to fetch report" });
   }
 });
 
-// ✅ Update Status
+// ✅ Update report status
 app.patch("/api/reports/:id/status", async (req, res) => {
+  const { status } = req.body;
   try {
     const report = await Report.findByIdAndUpdate(
       req.params.id,
-      { status: req.body.status },
+      { status },
       { new: true }
     );
     if (!report) return res.status(404).json({ message: "Report not found" });
@@ -466,6 +499,6 @@ app.patch("/api/reports/:id/status", async (req, res) => {
   }
 });
 
-// ✅ Start Server
+// ✅ Start server
 const PORT = process.env.WEBAPP_PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
